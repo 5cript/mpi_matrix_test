@@ -6,7 +6,11 @@ set(mpimatrix "MpiMatrixTest")
 project(mpimatrix)
 
 # Globber
-file(GLOB sources "*.cpp" "matrix/*.cpp")
+file(GLOB sources 
+	"*.cpp" 
+	"matrix/*.cpp"
+	"bench/*.cpp"
+)
 
 add_executable(${mpimatrix} ${sources})
 
