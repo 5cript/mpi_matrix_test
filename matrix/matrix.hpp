@@ -36,10 +36,16 @@ public: // Functions
 	 */
 	bool write_binary(std::string const& filename);
 
-	void write_matrix(std::string const& filename);
+	/** 
+	 *	Writes the matrix into a file.
+	 *
+	 *	@param filename The file location.
+	 */
+	bool write_data(std::string const& filename);
 
 	/**
  	 *	Serial Matrix multiplication.
+	 *	Non commutative.
 	 */
 	Matrix operator*(Matrix const& other);
 
@@ -55,8 +61,7 @@ public: // Functions
 	/// Disallow copying. Never copy 4 gigs casually anyway
 	Matrix(Matrix const&) = delete;
 
-	/// Non moveable for now
-	Matrix(Matrix&&) = delete;
+	Matrix(Matrix&&) = default;
 
 private: // Members
 	std::vector <int_type> data_;

@@ -5,6 +5,8 @@
 #include <iostream>
 
 //#####################################################################################################################
+#define COORD(X, Y) (Y * dimension_ + X)
+//#####################################################################################################################
 bool Matrix::read_binary(std::string const& filename, int dimension)
 {
 	std::ifstream reader{filename, std::ios_base::binary};
@@ -48,6 +50,9 @@ bool Matrix::read_data(std::string const& filename, int dimension)
 bool Matrix::write_binary(std::string const& filename)
 {
 	std::ofstream writer{filename, std::ios_base::binary};
+	if (!writer.good())
+		return false;
+
 	for (int y = 0; y != dimension_; ++y)
 	{
 		for (int x = 0; x != dimension_; ++x)
@@ -55,6 +60,25 @@ bool Matrix::write_binary(std::string const& filename)
 			writer.write(reinterpret_cast <char*> (&data_[y * dimension_ + x]), sizeof(int_type));
 		}
 	}
+	return true;
+}
+//---------------------------------------------------------------------------------------------------------------------
+bool Matrix::write_data(std::string const& filename)
+{
+	std::ofstream writer{filename, std::ios_base::binary};
+	if (!writer.good())
+		return false;
+
+	for (int y = 0; y != dimension_; ++y)
+	{
+		for (int x = 0; x != dimension_; ++x)
+		{	
+			writer << data_[y * dimension_ + x];
+			writer << ";";
+		}
+		writer.put('\n');
+	}
+	return true;
 }
 //---------------------------------------------------------------------------------------------------------------------
 void Matrix::print(int maxValues)
@@ -67,15 +91,30 @@ void Matrix::print(int maxValues)
 			if (y * dimension_ + x > maxValues)
 			{
 				std::cout << "...\n";
-				break;
+				return;
 			}
 		}
 		std::cout << "\n";
 	}
 }
 //---------------------------------------------------------------------------------------------------------------------
-Matrix Matrix::operator*(Matrix const& other);
+Matrix Matrix::operator*(Matrix const& other)
 {
+	Matrix result;
+	
+	result.dimension_ = dimension_;
+	result.data_.resize(dimension_ * dimension_);
 
+	for (int x = 0; x != dimension_; ++x)
+	{
+		for (int y = 0; y != dimension_; ++y)
+		{
+			int_type sum = 0;
+			for (int i = 0; i != dimension_; ++i)
+				sum += data_[COORD(i, y)] * other.data_[COORD(x, i)];
+			result.data_[COORD(x, y)] = sum;
+		}
+	}
+	return result;
 }
 //#####################################################################################################################
