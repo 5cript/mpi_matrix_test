@@ -10,6 +10,7 @@ file(GLOB sources
 	"*.cpp" 
 	"matrix/*.cpp"
 	"bench/*.cpp"
+	"mpi/*.cpp"
 )
 
 add_executable(${mpimatrix} ${sources})
