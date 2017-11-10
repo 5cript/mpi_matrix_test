@@ -14,7 +14,7 @@ public:
 	/**
 	 *	target += this x with.
 	 */
-	void accum_multiply(MatrixBlock* with, MatrixBlock* target);
+	void accum_multiply(MatrixBlock const& with, MatrixBlock target);
 
 private:
 	Matrix* matrix_;

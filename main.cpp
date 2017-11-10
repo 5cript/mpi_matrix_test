@@ -8,7 +8,6 @@
 #include <thread>
 
 static constexpr auto root = 0;
-static constexpr auto dimension = 100;
 
 //#define DO_TRANSMIT
 
@@ -20,7 +19,7 @@ int main(int argc, char** argv)
 		return 1;
 
 	// Actual Job
-	Mpi::Context ctx{root};	
+	Mpi::Context ctx{options.get().root};	
 	parallelMul(ctx, options.get().dimension);	
 
 	return 0;

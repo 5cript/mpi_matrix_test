@@ -1,2 +1,4 @@
+#!/bin/bash
+
 cd ./build
-mpirun ./MpiMatrixTest
+mpirun ./MpiMatrixTest "$@"

@@ -14,6 +14,13 @@ Matrix::Matrix(std::string const& binaryFile, int dimension)
 	read_binary(binaryFile, dimension);
 }
 //---------------------------------------------------------------------------------------------------------------------
+Matrix::Matrix(int dimension)
+	: data_{}
+	, dimension_{dimension}
+{
+	resize(dimension);
+}
+//---------------------------------------------------------------------------------------------------------------------
 bool Matrix::read_binary(std::string const& filename, int dimension)
 {
 	std::ifstream reader{filename, std::ios_base::binary};

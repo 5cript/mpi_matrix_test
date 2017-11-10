@@ -1,6 +1,7 @@
 #include "parallel_matrix.hpp"
 
 #include "matrix/matrix.hpp"
+#include "matrix/matrix_partition.hpp"
 #include "bench/benchhelp.hpp"
 #include "mpi/communicator.hpp"
 #include "helpers.hpp"
@@ -40,13 +41,25 @@ int parallelMul(Mpi::Context& ctx, int dimension)
 	for (; div != dimension / 2; ++div)
 		if (dimension % div == 0)
 			break;
-
 	if (dimension % div != 0)
 	{
 		std::cerr << "cannot partition matrix.\n";
 		return 1;
 	}
 
-	std::cout << dimension << "\n";
+	Matrix resultMatrix{dimension};
+	auto resultPartition = MatrixPartition{&resultMatrix, div};
+	auto leftPartition = MatrixPartition{&lhs, div};
+	auto rightPartition = MatrixPartition{&rhs, div};
+
+	for (int Cy = 0; Cy != div; ++Cy)
+		for (int Cx = 0; Cx != div; ++Cx) 
+			for (int i = 0; i != div; ++i)
+				leftPartition.aquire(i, Cy).accum_multiply(rightPartition.aquire(Cx, i), resultPartition.aquire(Cx, Cy));
+
+	if (ctx.is_root())
+		resultMatrix.print(100);
+
+	std::cout << div << "\n";
 	return 0;
 }

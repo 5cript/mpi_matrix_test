@@ -25,6 +25,11 @@ public: // Functions
 	Matrix(std::string const& binaryFile, int dimension);
 
 	/** 
+ 	 *	Creates an empty matrix of a specific size.
+	 */
+	Matrix(int dimension);
+
+	/** 
    	 *	Loads a matrix in binary format into the data_ container.
 	 *
 	 *	@param filename The file containing the data
