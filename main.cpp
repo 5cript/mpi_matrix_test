@@ -1,7 +1,6 @@
-#include "matrix/matrix.hpp"
-#include "bench/benchhelp.hpp"
 #include "mpi/mpi_core.hpp"
-#include "mpi/communicator.hpp"
+#include "program_options.hpp"
+#include "parallel_matrix.hpp"
 
 #include <iostream>
 #include <chrono>
@@ -9,31 +8,20 @@
 #include <thread>
 
 static constexpr auto root = 0;
+static constexpr auto dimension = 100;
+
+//#define DO_TRANSMIT
 
 int main(int argc, char** argv)
 {
-	Mpi::Context ctx{root};
-	Mpi::Communicator communicator{&ctx};
-	std::cout << "id: " << ctx.id() << " size: " << ctx.size() << "\n";
-	
-	Matrix lhs;
-	Matrix rhs;
-	if (ctx.is_root())
-	{
-		// root must load the matrix from disk.
-		lhs.read_binary("/bigwork/nhmqebbe/data/A_100x100.bin", 100);
-		rhs.read_binary("/bigwork/nhmqebbe/data/B_100x100.bin", 100);
-	}
-	else
-	{
-		// those who are not root shall reserve space for this.
-		lhs.resize(100);	
-		rhs.resize(100);
-	}
+	// Parameters
+	auto options = parse_arguments(argc, argv);
+	if (!options)
+		return 1;
 
-	// now spread the data from root to all other instances.
-	communicator.broadcast <Matrix::value_type> (lhs.data(), lhs.data_size());
-	communicator.broadcast <Matrix::value_type> (rhs.data(), rhs.data_size());
-	
+	// Actual Job
+	Mpi::Context ctx{root};	
+	parallelMul(ctx, options.get().dimension);	
+
 	return 0;
 }
