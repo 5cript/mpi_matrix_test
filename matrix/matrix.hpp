@@ -1,11 +1,16 @@
 #pragma once
 
+#include "forward.hpp"
+
 #include <cstdint>
 #include <string>
 #include <vector>
 
 class Matrix 
 {
+public: // Friends
+	friend MatrixBlock;
+
 public: // Typedef
 	using value_type = int32_t;
 
@@ -64,6 +69,11 @@ public: // Functions
 	 *	Set the size of the matrix.
 	 */
 	void resize(int dimension);
+	
+	/** 
+	 *	Returns the dimension of the matrix.
+	 */
+	int dimension() const;
 
 	/** 
  	 *	@return dimension * dimension

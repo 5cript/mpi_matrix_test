@@ -124,6 +124,11 @@ Matrix Matrix::operator*(Matrix const& other)
 	return result;
 }
 //---------------------------------------------------------------------------------------------------------------------
+int Matrix::dimension() const
+{
+	return dimension_;
+}
+//---------------------------------------------------------------------------------------------------------------------
 void Matrix::resize(int dimension)
 {
 	dimension_ = dimension;
