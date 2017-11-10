@@ -7,11 +7,17 @@
 class Matrix 
 {
 public: // Typedef
-	using int_type = int32_t;
+	using value_type = int32_t;
 
 public: // Functions
 	Matrix() = default;
 	~Matrix() = default;
+	
+	/** 
+	 *	Creates and loads a BINARY matrix.
+	 *	Calls read_binary(binaryFile, dimension);
+	 */
+	Matrix(std::string const& binaryFile, int dimension);
 
 	/** 
    	 *	Loads a matrix in binary format into the data_ container.
@@ -49,6 +55,21 @@ public: // Functions
 	 */
 	Matrix operator*(Matrix const& other);
 
+	/** 
+ 	 *	Provides access to internal values.
+	 */
+	value_type* data();
+
+	/** 
+	 *	Set the size of the matrix.
+	 */
+	void resize(int dimension);
+
+	/** 
+ 	 *	@return dimension * dimension
+	 */
+	std::size_t data_size() const;
+
 	/// Debug function, to show matrix contents (up to a max)
 	void print(int maxValues = 100);
 
@@ -64,6 +85,6 @@ public: // Functions
 	Matrix(Matrix&&) = default;
 
 private: // Members
-	std::vector <int_type> data_;
+	std::vector <value_type> data_;
 	int dimension_;
 };

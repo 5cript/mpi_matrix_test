@@ -1,2 +1,2 @@
 cd ./build
-./MpiMatrixTest
+mpirun ./MpiMatrixTest
