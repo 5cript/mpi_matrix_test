@@ -131,6 +131,15 @@ Matrix Matrix::operator*(Matrix const& other)
 	return result;
 }
 //---------------------------------------------------------------------------------------------------------------------
+Matrix Matrix::operator+(Matrix const& other)
+{
+	Matrix result{dimension_};
+	for (int x = 0; x != dimension_; ++x)
+		for (int y = 0; y != dimension_; ++y)
+			result.data_[COORD(x, y)] = data_[COORD(x, y)] + other.data_[COORD(x, y)];
+	return result;	
+}
+//---------------------------------------------------------------------------------------------------------------------
 int Matrix::dimension() const
 {
 	return dimension_;

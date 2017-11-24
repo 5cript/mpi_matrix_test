@@ -1,5 +1,6 @@
 #pragma once
 
+#include "forward.hpp"
 #include "matrix_block.hpp"
 
 class MatrixPartition

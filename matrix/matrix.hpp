@@ -65,6 +65,11 @@ public: // Functions
 	 */
 	Matrix operator*(Matrix const& other);
 
+	/**
+ 	 *	Matrix addition.
+	 */
+	Matrix operator+(Matrix const& other);
+
 	/** 
  	 *	Provides access to internal values.
 	 */
@@ -89,10 +94,14 @@ public: // Functions
 	void print(int maxValues = 100);
 
 	/// Disallow copying. Never copy 4 gigs casually anyway
-	Matrix& operator=(Matrix const&) = delete;
+	//Matrix& operator=(Matrix const&) = delete;
+	//FIXME
+	Matrix& operator=(Matrix const&) = default;
 
 	/// Non moveable for now
-	Matrix& operator=(Matrix&&) = delete;
+	//FIXME
+	//Matrix& operator=(Matrix&&) = delete;
+	Matrix& operator=(Matrix&&) = default;
 
 	/// Disallow copying. Never copy 4 gigs casually anyway
 	Matrix(Matrix const&) = delete;
