@@ -4,3 +4,4 @@ build/*
 *_build_log.html
 obj/*
 bin/*
+*.layout
