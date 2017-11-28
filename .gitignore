@@ -1,1 +1,6 @@
 build/*
+*.cbp
+*.depend
+*_build_log.html
+obj/*
+bin/*

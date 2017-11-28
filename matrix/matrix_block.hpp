@@ -21,7 +21,7 @@ public:
 	 */
 	void accum_multiply(MatrixBlock const& with, MatrixBlock target);
 
-	/** 
+	/**
 	 *	For debugging purposes only.
 	 */
 	void print(int maxValues = 100) const;
@@ -32,9 +32,30 @@ public:
 	Matrix clone() const;
 
 	/**
-	 *	Recalculates a local index to the parent matrix index.
+	 *  Returns value at position x, y in the view.
 	 */
-	int recalculateIndex(int localX, int localY) const;
+	Matrix::value_type& at(int x, int y)
+	{
+	    return matrix_->data_[
+            dimension_ * matrix_->dimension() * y_ +
+            matrix_->dimension() * y +
+            dimension_ * x_ +
+            x
+        ];
+	}
+
+	/**
+	 *  Returns value at position x, y in the view.
+	 */
+	Matrix::value_type at(int x, int y) const
+	{
+	    return matrix_->data_[
+            dimension_ * matrix_->dimension() * y_ +
+            matrix_->dimension() * y +
+            dimension_ * x_ +
+            x
+        ];
+	}
 
 private:
 	Matrix* matrix_;

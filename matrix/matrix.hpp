@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-class Matrix 
+class Matrix
 {
 public: // Friends
 	friend MatrixBlock;
@@ -17,19 +17,19 @@ public: // Typedef
 public: // Functions
 	Matrix() = default;
 	~Matrix() = default;
-	
-	/** 
+
+	/**
 	 *	Creates and loads a BINARY matrix.
 	 *	Calls read_binary(binaryFile, dimension);
 	 */
 	Matrix(std::string const& binaryFile, int dimension);
 
-	/** 
+	/**
  	 *	Creates an empty matrix of a specific size.
 	 */
 	Matrix(int dimension);
 
-	/** 
+	/**
    	 *	Loads a matrix in binary format into the data_ container.
 	 *
 	 *	@param filename The file containing the data
@@ -45,14 +45,14 @@ public: // Functions
  	 */
 	bool read_data(std::string const& filename, int dimension);
 
-	/** 
+	/**
 	 *	Writes the matrix into a file.
 	 *
 	 *	@param filename The file location.
 	 */
 	bool write_binary(std::string const& filename);
 
-	/** 
+	/**
 	 *	Writes the matrix into a file.
 	 *
 	 *	@param filename The file location.
@@ -70,22 +70,22 @@ public: // Functions
 	 */
 	Matrix operator+(Matrix const& other);
 
-	/** 
+	/**
  	 *	Provides access to internal values.
 	 */
 	value_type* data();
 
-	/** 
+	/**
 	 *	Set the size of the matrix.
 	 */
 	void resize(int dimension);
-	
-	/** 
+
+	/**
 	 *	Returns the dimension of the matrix.
 	 */
 	int dimension() const;
 
-	/** 
+	/**
  	 *	@return dimension * dimension
 	 */
 	std::size_t data_size() const;
@@ -94,21 +94,24 @@ public: // Functions
 	void print(int maxValues = 100);
 
 	/// Disallow copying. Never copy 4 gigs casually anyway
-	//Matrix& operator=(Matrix const&) = delete;
-	//FIXME
-	Matrix& operator=(Matrix const&) = default;
+	Matrix& operator=(Matrix const&) = delete;
 
 	/// Non moveable for now
-	//FIXME
-	//Matrix& operator=(Matrix&&) = delete;
-	Matrix& operator=(Matrix&&) = default;
+	Matrix& operator=(Matrix&&) = delete;
 
 	/// Disallow copying. Never copy 4 gigs casually anyway
 	Matrix(Matrix const&) = delete;
 
 	Matrix(Matrix&&) = default;
 
+	/**
+	 *  Generates a random matrix
+	 */
+    friend Matrix generate_random_matrix(int dimension);
+
 private: // Members
 	std::vector <value_type> data_;
 	int dimension_;
 };
+
+Matrix generate_random_matrix(int dimension);

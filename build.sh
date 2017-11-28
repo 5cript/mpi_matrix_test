@@ -5,5 +5,9 @@ export CXX=g++
 
 mkdir -p build
 cd build
-cmake ..
+if [[ -v MSYSTEM ]]; then
+	cmake -G"MSYS Makefiles" ..
+else
+	cmake ..
+fi
 make -j4
