@@ -3,9 +3,9 @@
 cd ./build
 
 # Windows or Linux?
-if [[ -v MSYSTEM ]]; then
+if [[ -n ${!MSYSTEM} ]]; then
 	export PATH="$MSMPI_BIN":$PATH
-	mpiexec -n 4 ./MpiMatrixTest "$@"
+	mpiexec -n4 ./MpiMatrixTest "$@"
 else
-	mpirun ./MpiMatrixTest "$@"
+	mpirun  ./MpiMatrixTest "$@"
 fi

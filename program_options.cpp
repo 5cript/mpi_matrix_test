@@ -19,6 +19,7 @@ boost::optional <ProgramOptions> parse_arguments(int argc, char** argv)
 	    ("lhs,l", po::value(&opts.leftMatrix))
 	    ("rhs,r", po::value(&opts.rightMatrix))
 	    ("human-readable-input,h", po::bool_switch(&opts.humanReadableInput)->default_value(false))
+        ("idle-policy,p", po::value(&opts.idlePolicy)->default_value(static_cast <int> (IdlePolicy::FullIdle)))
 	;
 
 	po::variables_map vm;

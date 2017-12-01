@@ -5,7 +5,7 @@ export CXX=g++
 
 mkdir -p build
 cd build
-if [[ -v MSYSTEM ]]; then
+if [[ -n ${!MSYSTEM} ]]; then
 	cmake -G"MSYS Makefiles" ..
 else
 	cmake ..

@@ -4,12 +4,31 @@
 
 #include <iostream>
 #include <chrono>
-
+#include <iterator>
+#include <vector>
 #include <thread>
 
-static constexpr auto root = 0;
-
-//#define DO_TRANSMIT
+template<template <typename...> class ContainerT, typename T>
+std::ostream& operator<<(std::ostream& s, ContainerT<T> t) { 
+    if (t.empty())
+    {
+        s << "[]";
+        return s;
+    }
+    s << '[';
+    auto i = std::begin(t);
+    for (; i != std::end(t); ++i)
+    {
+        auto j = i;
+        ++j;
+        if (j == std::end(t))
+            break;
+        s << *i << ',';
+    }
+    ++i;
+    s << *i;
+    return s << ']' << std::endl;
+}
 
 int main(int argc, char** argv)
 {
@@ -18,9 +37,23 @@ int main(int argc, char** argv)
 	if (!options)
 		return 1;
 
+    // The MPI context handles everything MPI world related.
+	Mpi::Context ctx{options.get().root};   
+    if (ctx.is_root())
+    {
+        auto optimalInstances = optimal_instances(options.get().dimension);
+
+        std::cout << optimalInstances << "\n\n";
+    
+        if (optimalInstances.find(ctx.size()) == optimalInstances.end())
+            std::cout << "WARNING: The amount of MPI instances is not optimal. These are theoretical optimal values \n"
+                      << optimalInstances << "\n";
+        else
+            std::cout << "MPI instances optimal, no idling will happen: " << ctx.size() << "\n";
+    }
+
 	// Actual Job
-	Mpi::Context ctx{options.get().root};
-	parallel_multiplication(ctx, options.get());
+    parallel_multiplication(ctx, options.get());
 
 	return 0;
 }
