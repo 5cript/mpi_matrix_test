@@ -1,31 +1,33 @@
 #include "parallel_matrix.hpp"
 
+#include "bench/benchhelp.hpp"
+#include "container_print.hpp"
+
 #include "matrix/matrix.hpp"
 #include "matrix/matrix_partition.hpp"
-#include "bench/benchhelp.hpp"
+
 #include "mpi/communicator.hpp"
-#include "parallel_matrix.hpp"
+#include "mpi/group.hpp"
 
 #include <iostream>
+#include <memory>
+#include <algorithm>    
 
-//#define DO_TRANSMIT
+#define DO_TRANSMIT
 
 //####################################################################################################################
 int parallel_multiplication(Mpi::Context& ctx, ProgramOptions const& options)
 {
 	Mpi::Communicator communicator{&ctx};
 
-	if (!ctx.is_root())
-		return 0;
-
     // rename
     auto const& dimension = options.dimension;
 
 	Matrix lhs;
 	Matrix rhs;
-    //auto res = load_matrices(ctx, options, lhs, rhs);
-    //if (res != 0)
-    //    return res;
+    auto res = load_matrices(ctx, options, lhs, rhs);
+    if (res != 0)
+        return res;
 
 #ifdef DO_TRANSMIT
 	// now spread the data from root to all other instances.
@@ -34,48 +36,85 @@ int parallel_multiplication(Mpi::Context& ctx, ProgramOptions const& options)
 #endif // DO_TRANSMIT
 
 	// determine the block width for the partitions (the matrix dimension is never prime)
+	auto instanceCount = ctx.size();
 
-    int REMOVE_ME = 12;
+	int blockWidth = MatrixPartition::optimal_partitioning(dimension, instanceCount);
+	int div = dimension/blockWidth;
 
-	auto blockWidthOptim = MatrixPartition::optimal_partitioning(dimension, REMOVE_ME, true);
-	auto blockWidth = MatrixPartition::optimal_partitioning(dimension, REMOVE_ME);
-    auto blockPerInstance = MatrixPartition::blocks_per_instance(dimension, blockWidth, REMOVE_ME);    
+	if (ctx.is_root())
+	{
+		std::cout << "total dimension:\t" << dimension << "\n";
+		std::cout << "width of a block:\t" << blockWidth << "\n";
+		std::cout << "mpi instances:\t\t" << instanceCount << "\n";
+		std::cout << "total blocks:\t\t" << (dimension/blockWidth)*(dimension/blockWidth) << "\n";
+		std::cout << "rest:\t\t\t" << (dimension/blockWidth)*(dimension/blockWidth) - instanceCount << "\n";
+	}
 
-    std::cout << "total dimension:\t" << dimension << "\n";
-    std::cout << "width of a block:\t" << blockWidth << "\n";
-    std::cout << "width of block (if no idle):\t" << blockWidthOptim << "\n";
-    std::cout << "block / instance:\t" << blockPerInstance << "\n";
-    std::cout << "mpi instances:\t\t" << REMOVE_ME << "\n";
-    std::cout << "total blocks:\t\t" << (dimension/blockWidth)*(dimension/blockWidth) << "\n";
-    std::cout << "rest:\t\t\t" << (dimension/blockWidth)*(dimension/blockWidth) - blockPerInstance * REMOVE_ME << "\n";
-    return 0;
+	// result can be just one block.
+	Matrix resultBlock{blockWidth};	
+	auto resultBlockView = MatrixPartition{&resultBlock, 1, ctx.size()};
 
-    /*
-	Matrix resultMatrix{dimension};
-	auto resultPartition = MatrixPartition{&resultMatrix, div, ctx.size()};
 	auto leftPartition = MatrixPartition{&lhs, div, ctx.size()};
 	auto rightPartition = MatrixPartition{&rhs, div, ctx.size()};
 
-    auto thisId = ctx.id();
-*/
+	auto multiplyStep = [&](int offset)
+	{
+		auto offsetId = ctx.id() + offset;
+		if (offsetId >= div*div)
+			return;
 
-    /*
-	for (int Cy = 0; Cy != div; ++Cy)
-		for (int Cx = 0; Cx != div; ++Cx)
-			for (int i = 0; i != div; ++i)
-				leftPartition.aquire(i, Cy).accum_multiply(
-					rightPartition.aquire(Cx, i), resultPartition.aquire(Cx, Cy)
-				);
-    */
+		auto y = offsetId / div;
+		auto x = offsetId / div;
+		for (int i = 0; i != div; ++i)
+		{
+			leftPartition.aquire(i, y).accum_multiply(
+				rightPartition.aquire(x, i), resultBlockView.aquire(0, 0) // rP(x, y)
+			);
+		}
+	};
 
-/*
+
+	// root needs the entire matrix.
+	std::vector <Matrix::value_type> overallResult;
 	if (ctx.is_root())
-		resultMatrix.print(100);
+		overallResult.resize(dimension*dimension);
 
-	std::cout << "\n";
+	// Step1: Do the spread multiplication (excl those blocks which do not fit if not optimal)
+	resultBlock.clear();
+	multiplyStep(0);
 
-	(lhs*rhs).print();
-*/
+	// Gather data from first multiplication step
+	communicator.gather(resultBlock.data(), ctx.is_root() ? overallResult.data() : nullptr, resultBlock.data_size());
+
+	// Step2: Do the remaining multiplications.
+	if (div*div > ctx.size())
+	{
+		multiplyStep(ctx.size());
+		// create group and gather
+		// TODO...	
+
+		int incrementor = 0;
+		std::vector <int> subGroupIds(div*div - ctx.size());
+		std::generate (subGroupIds.begin(), subGroupIds.end(), [&incrementor](){return incrementor++;});
+		//std::cout << "(" << subGroupIds.size() << ")" << subGroupIds << "\n";
+
+		Mpi::WorldGroup world;
+		Mpi::SubGroup remaining{world, subGroupIds};
+		Mpi::Communicator subCom{&ctx, remaining.create_communicator()};
+		subCom.gather(
+			resultBlock.data(), 
+			ctx.is_root() ? (overallResult.data() + ctx.size() * blockWidth) : nullptr,
+			resultBlock.data_size()
+		);
+	}
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	
+	if (ctx.is_root())
+	{
+		// OVERALL RESULT NOW CONTAINS A PASTED BLOCK 
+	}
+
 	return 0;
 }
 //--------------------------------------------------------------------------------------------------------------------

@@ -17,6 +17,11 @@ public:
 	MatrixBlock& operator=(Matrix const& matrix);
 
 	/**
+ 	 *	sets all matrix entries to 0.
+	 */
+	void clear();
+
+	/**
 	 *	target += this x with.
 	 */
 	void accum_multiply(MatrixBlock const& with, MatrixBlock target);

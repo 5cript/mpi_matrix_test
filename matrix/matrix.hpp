@@ -30,6 +30,11 @@ public: // Functions
 	Matrix(int dimension);
 
 	/**
+ 	 *	Resets all matrix elements to 0.
+	 */
+	void clear();
+
+	/**
    	 *	Loads a matrix in binary format into the data_ container.
 	 *
 	 *	@param filename The file containing the data

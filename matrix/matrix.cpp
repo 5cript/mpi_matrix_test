@@ -24,6 +24,13 @@ Matrix::Matrix(int dimension)
 	resize(dimension);
 }
 //---------------------------------------------------------------------------------------------------------------------
+void Matrix::clear()
+{
+	for (int y = 0; y != dimension_; ++y)
+		for (int x = 0; x != dimension_; ++x)
+			data_[y * dimension_ + x] = 0;
+}
+//---------------------------------------------------------------------------------------------------------------------
 bool Matrix::read_binary(std::string const& filename, int dimension)
 {
 	std::ifstream reader{filename, std::ios_base::binary};
@@ -33,12 +40,8 @@ bool Matrix::read_binary(std::string const& filename, int dimension)
 	resize(dimension);
 
 	for (int y = 0; y != dimension; ++y)
-	{
 		for (int x = 0; x != dimension; ++x)
-		{
 			reader.read(reinterpret_cast <char*> (&data_[y * dimension + x]), sizeof(value_type));
-		}
-	}
 
 	return true;
 }
@@ -55,9 +58,7 @@ bool Matrix::read_data(std::string const& filename, int dimension)
 	for (int y = 0; y != dimension; ++y)
 	{
 		for (int x = 0; x != dimension; ++x)
-		{
 			reader >> data_[y * dimension + x] >> ';';
-		}
 		reader.seekg(1, std::ios_base::cur);
 	}
 	return true;
@@ -70,12 +71,9 @@ bool Matrix::write_binary(std::string const& filename)
 		return false;
 
 	for (int y = 0; y != dimension_; ++y)
-	{
 		for (int x = 0; x != dimension_; ++x)
-		{
 			writer.write(reinterpret_cast <char*> (&data_[y * dimension_ + x]), sizeof(value_type));
-		}
-	}
+
 	return true;
 }
 //---------------------------------------------------------------------------------------------------------------------

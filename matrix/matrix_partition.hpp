@@ -30,11 +30,6 @@ public:
 	 */
 	MatrixBlock aquire(int x, int y);
 
-    /** 
-     *  Calculates the amount of block multiplications per mpi instance.
-     */
-    static int blocks_per_instance(int dimension, int blockWidth, int mpiInstances);
-
     /**
      *  Determine a number of row and column blocks that are optimal for the 
      *  amount of mpi instances and the matrix size.
@@ -51,5 +46,4 @@ public:
 private:
 	Matrix* matrix_;
 	int div_;
-    int mpiInstances_;
 };

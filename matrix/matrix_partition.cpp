@@ -8,7 +8,6 @@
 MatrixPartition::MatrixPartition(Matrix* matrix, int div, int mpiInstances)
 	: matrix_{matrix}
 	, div_{div}
-    , mpiInstances_{mpiInstances}
 {
 	
 }
@@ -21,12 +20,6 @@ int MatrixPartition::width()
 int MatrixPartition::height()
 {
 	return div_;
-}
-//--------------------------------------------------------------------------------------------------------------------
-int MatrixPartition::blocks_per_instance(int dimension, int blockWidth, int mpiInstances)
-{
-    int div = dimension / blockWidth;
-    return div*div / mpiInstances;
 }
 //--------------------------------------------------------------------------------------------------------------------
 MatrixBlock MatrixPartition::aquire(int x, int y)

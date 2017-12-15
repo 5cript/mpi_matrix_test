@@ -41,6 +41,13 @@ Matrix MatrixBlock::clone() const
 	return cpy;
 }
 //--------------------------------------------------------------------------------------------------------------------
+void MatrixBlock::clear()
+{
+	for (int x = 0; x != dimension_; ++x)
+		for (int y = 0; y != dimension_; ++y)
+			at(x, y) = 0;
+}
+//--------------------------------------------------------------------------------------------------------------------
 void MatrixBlock::accum_multiply(MatrixBlock const& with, MatrixBlock target)
 {
 	for (int x = 0; x != dimension_; ++x)

@@ -16,10 +16,10 @@ boost::optional <ProgramOptions> parse_arguments(int argc, char** argv)
 	    ("help", "produce help message")
 	    ("dimension,d", po::value<int>(&opts.dimension)->default_value(100), "dimension of the square matrix d*d")
 	    ("root,i", po::value<int>(&opts.root)->default_value(0), "the root process id")
-	    ("lhs,l", po::value(&opts.leftMatrix))
-	    ("rhs,r", po::value(&opts.rightMatrix))
-	    ("human-readable-input,h", po::bool_switch(&opts.humanReadableInput)->default_value(false))
-        ("idle-policy,p", po::value(&opts.idlePolicy)->default_value(static_cast <int> (IdlePolicy::FullIdle)))
+	    ("lhs,l", po::value(&opts.leftMatrix), "The path to the left matrix")
+	    ("rhs,r", po::value(&opts.rightMatrix), "The path to the right matrix")
+	    ("human-readable-input,h", po::bool_switch(&opts.humanReadableInput)->default_value(false), "add, if the matrices are in human readable format")
+        ("idle-policy,p", po::value(&opts.idlePolicy)->default_value(static_cast <int> (IdlePolicy::FullIdle)), "NOT IMPLEMENTED")
 	;
 
 	po::variables_map vm;

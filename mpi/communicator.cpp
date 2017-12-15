@@ -3,8 +3,9 @@
 namespace Mpi
 {
 //####################################################################################################################
-	Communicator::Communicator(Context* context)
+	Communicator::Communicator(Context* context, MPI_Comm com)
 		: context_{context}
+		, com_{com}
 	{
 		
 	}
