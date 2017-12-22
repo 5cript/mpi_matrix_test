@@ -5,6 +5,7 @@
 
 #include "matrix/matrix.hpp"
 #include "matrix/matrix_partition.hpp"
+#include "matrix/block_list.hpp"
 
 #include "mpi/communicator.hpp"
 #include "mpi/group.hpp"
@@ -64,13 +65,14 @@ int parallel_multiplication(Mpi::Context& ctx, ProgramOptions const& options)
 			return;
 
 		auto y = offsetId / div;
-		auto x = offsetId / div;
+		auto x = offsetId % div;
 		for (int i = 0; i != div; ++i)
 		{
 			leftPartition.aquire(i, y).accum_multiply(
 				rightPartition.aquire(x, i), resultBlockView.aquire(0, 0) // rP(x, y)
 			);
 		}
+		std::cout << "*(" << x << "," << y << ")\n";
 	};
 
 
@@ -86,9 +88,12 @@ int parallel_multiplication(Mpi::Context& ctx, ProgramOptions const& options)
 	// Gather data from first multiplication step
 	communicator.gather(resultBlock.data(), ctx.is_root() ? overallResult.data() : nullptr, resultBlock.data_size());
 
+	Mpi::WorldGroup world;
 	// Step2: Do the remaining multiplications.
-	if (div*div > ctx.size())
+
+	if (div*div > ctx.size() && ctx.id() < div*div - ctx.size())
 	{
+		resultBlock.clear();
 		multiplyStep(ctx.size());
 		// create group and gather
 		// TODO...	
@@ -97,13 +102,12 @@ int parallel_multiplication(Mpi::Context& ctx, ProgramOptions const& options)
 		std::vector <int> subGroupIds(div*div - ctx.size());
 		std::generate (subGroupIds.begin(), subGroupIds.end(), [&incrementor](){return incrementor++;});
 		//std::cout << "(" << subGroupIds.size() << ")" << subGroupIds << "\n";
-
-		Mpi::WorldGroup world;
+		
 		Mpi::SubGroup remaining{world, subGroupIds};
 		Mpi::Communicator subCom{&ctx, remaining.create_communicator()};
 		subCom.gather(
 			resultBlock.data(), 
-			ctx.is_root() ? (overallResult.data() + ctx.size() * blockWidth) : nullptr,
+			ctx.is_root() ? (overallResult.data() + ctx.size() * (blockWidth * blockWidth)) : nullptr,
 			resultBlock.data_size()
 		);
 	}
@@ -113,6 +117,10 @@ int parallel_multiplication(Mpi::Context& ctx, ProgramOptions const& options)
 	if (ctx.is_root())
 	{
 		// OVERALL RESULT NOW CONTAINS A PASTED BLOCK 
+		BlockList blocks{&overallResult, blockWidth, dimension};
+		blocks.save_block_sequence("blocky.txt");
+		blocks.save_matrix("result.txt");
+		std::cout << "\n\n";
 	}
 
 	return 0;

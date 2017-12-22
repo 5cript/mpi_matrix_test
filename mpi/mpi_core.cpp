@@ -1,4 +1,5 @@
 #include "mpi_core.hpp"
+#include "error.hpp"
 
 namespace Mpi
 {
@@ -6,25 +7,29 @@ namespace Mpi
 	Context::Context(int root)
 		: root_{root}
 	{
-		MPI_Init(nullptr, nullptr);
+		int res = MPI_Init(nullptr, nullptr);
+		print_error(res);
 	}
 //--------------------------------------------------------------------------------------------------------------------
 	Context::~Context()
 	{
-		MPI_Finalize();
+		int res = MPI_Finalize();
+		print_error(res);
 	}
 //--------------------------------------------------------------------------------------------------------------------
 	int Context::id() const
 	{
 		int id;
-		MPI_Comm_rank(MPI_COMM_WORLD, &id);
+		int res = MPI_Comm_rank(MPI_COMM_WORLD, &id);
+		print_error(res);
 		return id;
 	}
 //--------------------------------------------------------------------------------------------------------------------
 	int Context::size() const
 	{
 		int size;
-		MPI_Comm_size(MPI_COMM_WORLD, &size);
+		int res = MPI_Comm_size(MPI_COMM_WORLD, &size);
+		print_error(res);
 		return size;
 	}
 //--------------------------------------------------------------------------------------------------------------------

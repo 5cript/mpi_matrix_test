@@ -1,8 +1,11 @@
 #pragma once
 
 #include "mpi_core.hpp"
+#include "error.hpp"
 
 #include <vector>
+#include <iostream>
+#include <iomanip>
 
 namespace Mpi
 {
@@ -10,7 +13,10 @@ namespace Mpi
 	{	
 	public:
 		Group() noexcept = default;
-		virtual ~Group() = default;
+		virtual ~Group()
+		{
+			MPI_Group_free(&group_);
+		}
 
 		Group(Group const&) = delete;
 		Group(Group&&) = default;
@@ -25,6 +31,7 @@ namespace Mpi
 		MPI_Comm create_communicator(int tag = 0) noexcept
 		{
 			MPI_Comm result;
+			//MPI_Comm_create(MPI_COMM_WORLD, group_, &result);
 			MPI_Comm_create_group(MPI_COMM_WORLD, group_, tag, &result);
 			return result;
 		}
@@ -38,11 +45,9 @@ namespace Mpi
 	public:
 		SubGroup(Group& parentGroup, std::vector <int> const& arr) noexcept
 		{
-			MPI_Group_incl(parentGroup.get(), arr.size(), arr.data(), &group_);
+			int res = MPI_Group_incl(parentGroup.get(), arr.size(), arr.data(), &group_);
+			print_error(res);
 		}
-
-	protected:
-		MPI_Group group_;
 	};
 
 	class WorldGroup : public Group
@@ -50,7 +55,8 @@ namespace Mpi
 	public:
 		WorldGroup() noexcept
 		{
-			MPI_Comm_group(MPI_COMM_WORLD, &group_);
+			int res = MPI_Comm_group(MPI_COMM_WORLD, &group_);
+			print_error(res);
 		}
 	};
 }

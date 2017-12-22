@@ -2,6 +2,7 @@
 
 #include "mpi_core.hpp"
 #include "types.hpp"
+#include "error.hpp"
 
 namespace Mpi
 {
@@ -9,6 +10,7 @@ namespace Mpi
 	{
 	public:
 		Communicator(Context* context, MPI_Comm com = MPI_COMM_WORLD);
+		~Communicator();
 	
 		/**
 	 	 *	Broadcast data over to all instances.
@@ -16,19 +18,20 @@ namespace Mpi
 		template <typename T>
 		void broadcast(T* data, int bufferSize)
 		{
-			MPI_Bcast(
+			int res = MPI_Bcast(
 				reinterpret_cast <void*> (data), 
 				bufferSize, 
 				ConvertToMpiType <T>::value,
 				context_->root(),
 				com_
 			);
+			print_error(res);
 		}
 
 		template <typename T>
 		void gather(T* sendData, T* recvBuffer, int sendBufferSize)
 		{		
-			MPI_Gather(
+			int res = MPI_Gather(
 				sendData,
 				sendBufferSize,
 				ConvertToMpiType <T>::value,
@@ -38,6 +41,7 @@ namespace Mpi
 				context_->root(),
 				com_
 			);
+			print_error(res);
 		}
 	private:
 		Context* context_;
