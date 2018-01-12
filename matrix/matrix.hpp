@@ -55,14 +55,14 @@ public: // Functions
 	 *
 	 *	@param filename The file location.
 	 */
-	bool write_binary(std::string const& filename);
+	bool write_binary(std::string const& filename) const;
 
 	/**
 	 *	Writes the matrix into a file.
 	 *
 	 *	@param filename The file location.
 	 */
-	bool write_data(std::string const& filename);
+	bool write_data(std::string const& filename) const;
 
 	/**
  	 *	Serial Matrix multiplication.

@@ -11,6 +11,8 @@ namespace Mpi
 	public:
 		Communicator(Context* context, MPI_Comm com = MPI_COMM_WORLD);
 		~Communicator();
+
+		MPI_Comm get_handle() const;
 	
 		/**
 	 	 *	Broadcast data over to all instances.

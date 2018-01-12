@@ -22,3 +22,5 @@ int load_matrices(Mpi::Context& ctx, ProgramOptions const& options, Matrix& lhs,
  *  Loads the matrices from based on options.
  */
 std::set <int> optimal_instances(int dimension);
+
+void save_intermediary(Matrix const& matrix, Mpi::Context& ctx, ProgramOptions const& options, int suffix);

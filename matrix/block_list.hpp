@@ -20,7 +20,10 @@ public:
 
 	bool save_matrix(std::string const& filename, bool humanReadable = true);
 
-	bool save_block_sequence(std::string const& filename, bool humanReadable = true);
+	/**
+ 	 *	Saves the matrix as a sequence of block matrices. DEBUGGING ONLY. HUMAN READABLE ONLY.
+	 */
+	bool save_block_sequence(std::string const& filename);
 
 private:
 	/// This container is encoded in: block_x_major, x_major.

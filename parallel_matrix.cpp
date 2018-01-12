@@ -19,7 +19,9 @@
 //####################################################################################################################
 int parallel_multiplication(Mpi::Context& ctx, ProgramOptions const& options)
 {
+	TimeStampCollection stamps;
 	Mpi::Communicator communicator{&ctx};
+	stamps.add("communicator_constructed");
 
     // rename
     auto const& dimension = options.dimension;
@@ -32,8 +34,10 @@ int parallel_multiplication(Mpi::Context& ctx, ProgramOptions const& options)
 
 #ifdef DO_TRANSMIT
 	// now spread the data from root to all other instances.
+	stamps.add("broadcast_whole");
 	communicator.broadcast <Matrix::value_type> (lhs.data(), lhs.data_size());
 	communicator.broadcast <Matrix::value_type> (rhs.data(), rhs.data_size());
+	stamps.add("broadcast_whole_end");
 #endif // DO_TRANSMIT
 
 	// determine the block width for the partitions (the matrix dimension is never prime)
@@ -72,57 +76,94 @@ int parallel_multiplication(Mpi::Context& ctx, ProgramOptions const& options)
 				rightPartition.aquire(x, i), resultBlockView.aquire(0, 0) // rP(x, y)
 			);
 		}
-		std::cout << "*(" << x << "," << y << ")\n";
+		//std::cout << "*(" << x << "," << y << ")\n";
 	};
 
 
 	// root needs the entire matrix.
 	std::vector <Matrix::value_type> overallResult;
-	if (ctx.is_root())
-		overallResult.resize(dimension*dimension);
 
 	// Step1: Do the spread multiplication (excl those blocks which do not fit if not optimal)
 	resultBlock.clear();
 	multiplyStep(0);
 
-	// Gather data from first multiplication step
-	communicator.gather(resultBlock.data(), ctx.is_root() ? overallResult.data() : nullptr, resultBlock.data_size());
 
-	Mpi::WorldGroup world;
+	// Save individual parts on hard drive.
+	if (options.saveChunks)
+		save_intermediary(resultBlock, ctx, options, 1);
+
+	// Gather over network.
+	if (options.writeStrategy == WriteStrategy::Gather)
+	{
+		if (ctx.is_root())
+			overallResult.resize(dimension*dimension);
+
+		stamps.add("gather_1_start");
+		communicator.gather(resultBlock.data(), ctx.is_root() ? overallResult.data() : nullptr, resultBlock.data_size());
+		stamps.add("gather_1_end");
+	}
+
+	std::unique_ptr <Mpi::SharedFile> sharedFile;
+	// 4.2 / 4.3
+	if (options.writeStrategy == WriteStrategy::SharedFile)
+	{
+		sharedFile = std::make_unique(MPI_COMM_WORLD, options.resultMatrix, Mpi::FileStreamDirection::Write);
+	
+		
+	}
+
 	// Step2: Do the remaining multiplications.
-
 	if (div*div > ctx.size() && ctx.id() < div*div - ctx.size())
 	{
 		resultBlock.clear();
 		multiplyStep(ctx.size());
-		// create group and gather
-		// TODO...	
 
-		int incrementor = 0;
-		std::vector <int> subGroupIds(div*div - ctx.size());
-		std::generate (subGroupIds.begin(), subGroupIds.end(), [&incrementor](){return incrementor++;});
-		//std::cout << "(" << subGroupIds.size() << ")" << subGroupIds << "\n";
-		
-		Mpi::SubGroup remaining{world, subGroupIds};
-		Mpi::Communicator subCom{&ctx, remaining.create_communicator()};
-		subCom.gather(
-			resultBlock.data(), 
-			ctx.is_root() ? (overallResult.data() + ctx.size() * (blockWidth * blockWidth)) : nullptr,
-			resultBlock.data_size()
-		);
+		// 3.5
+		if (options.saveChunks)
+			save_intermediary(resultBlock, ctx, options, 2);
+
+		// 5 
+		if (options.writeStrategy == WriteStrategy::Gather)
+		{		
+			int incrementor = 0;
+			std::vector <int> subGroupIds(div*div - ctx.size());
+			std::generate (subGroupIds.begin(), subGroupIds.end(), [&incrementor](){return incrementor++;});
+			//std::cout << "(" << subGroupIds.size() << ")" << subGroupIds << "\n";
+
+			Mpi::WorldGroup world;
+			Mpi::SubGroup remaining{world, subGroupIds};
+			Mpi::Communicator subCom{&ctx, remaining.create_communicator()};
+
+			stamps.add("gather_2_start");
+			subCom.gather(
+				resultBlock.data(), 
+				ctx.is_root() ? (overallResult.data() + ctx.size() * (blockWidth * blockWidth)) : nullptr,
+				resultBlock.data_size()
+			);
+			stamps.add("gather_2_end");
+		}
 	}
 
 	MPI_Barrier(MPI_COMM_WORLD);
-	
-	if (ctx.is_root())
+		
+	// 5
+	if (options.writeStrategy == WriteStrategy::Gather)
 	{
-		// OVERALL RESULT NOW CONTAINS A PASTED BLOCK 
-		BlockList blocks{&overallResult, blockWidth, dimension};
-		blocks.save_block_sequence("blocky.txt");
-		blocks.save_matrix("result.txt");
-		std::cout << "\n\n";
+		stamps.add("saving_at_root");
+		if (ctx.is_root())
+		{
+			// Overall Result contains a sequence of blocks
+			BlockList blocks{&overallResult, blockWidth, dimension};
+			//blocks.save_block_sequence("blocky.txt");
+			blocks.save_matrix(options.resultMatrix, options.humanReadableOutput);
+			std::cout << "\n\n";
+		}
+		stamps.add("saving_at_root_end");
 	}
 
+	stamps.add("completion");
+	if (ctx.is_root())
+		stamps.dump();
 	return 0;
 }
 //--------------------------------------------------------------------------------------------------------------------
@@ -160,5 +201,13 @@ int load_matrices(Mpi::Context& ctx, ProgramOptions const& options, Matrix& lhs,
 std::set <int> optimal_instances(int dimension)
 {
     return MatrixPartition::optimal_instance_counts(dimension);
+}
+//--------------------------------------------------------------------------------------------------------------------
+void save_intermediary(Matrix const& matrix, Mpi::Context& ctx, ProgramOptions const& options, int suffix)
+{
+	if (!options.chunksAreHumanReadable)
+		matrix.write_binary(options.partResultDirectory + "/result." + std::to_string(ctx.id()) + "_" + std::to_string(suffix));
+	else
+		matrix.write_data(options.partResultDirectory + "/result." + std::to_string(ctx.id()) + "_" + std::to_string(suffix));
 }
 //####################################################################################################################

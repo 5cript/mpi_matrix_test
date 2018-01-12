@@ -64,7 +64,7 @@ bool Matrix::read_data(std::string const& filename, int dimension)
 	return true;
 }
 //---------------------------------------------------------------------------------------------------------------------
-bool Matrix::write_binary(std::string const& filename)
+bool Matrix::write_binary(std::string const& filename) const
 {
 	std::ofstream writer{filename, std::ios_base::binary};
 	if (!writer.good())
@@ -72,12 +72,12 @@ bool Matrix::write_binary(std::string const& filename)
 
 	for (int y = 0; y != dimension_; ++y)
 		for (int x = 0; x != dimension_; ++x)
-			writer.write(reinterpret_cast <char*> (&data_[y * dimension_ + x]), sizeof(value_type));
+			writer.write(reinterpret_cast <char const*> (&data_[y * dimension_ + x]), sizeof(value_type));
 
 	return true;
 }
 //---------------------------------------------------------------------------------------------------------------------
-bool Matrix::write_data(std::string const& filename)
+bool Matrix::write_data(std::string const& filename) const
 {
 	std::ofstream writer{filename, std::ios_base::binary};
 	if (!writer.good())

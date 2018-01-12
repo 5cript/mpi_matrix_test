@@ -36,33 +36,35 @@ bool BlockList::save_matrix(std::string const& filename, bool humanReadable)
 	auto blockDataSize = blockDimension_*blockDimension_;
 	auto blocksPerRow = overallDimension_ / blockDimension_;
 
-	if (humanReadable)
+	std::ofstream writer{filename, std::ios_base::binary};
+	if (!writer.good())
+		return false;
+
+			
+	for (int y = 0; y != overallDimension_; ++y)
 	{
-		std::ofstream writer{filename, std::ios_base::binary};
-		if (!writer.good())
-			return false;
-
-		
-		for (int y = 0; y != overallDimension_; ++y)
+		for (int x = 0; x != overallDimension_; ++x)
 		{
-			for (int x = 0; x != overallDimension_; ++x)
-			{
-				auto index = 
-					((y / blockDimension_) * blocksPerRow + x / blockDimension_) * blockDimension_ * blockDimension_ + 
-					(x % blockDimension_ + (y % blockDimension_) * blockDimension_)
-				;
+			auto index = 
+				((y / blockDimension_) * blocksPerRow + x / blockDimension_) * blockDimension_ * blockDimension_ + 
+				(x % blockDimension_ + (y % blockDimension_) * blockDimension_)
+			;
 
+			if (humanReadable)
+			{
 				writer << (*blocks_)[index];
 				//writer << (*blocks_)[y * overallDimension_ + x];
 				writer << ";";
 			}
-			writer.put('\n');
+			else
+				writer.write(reinterpret_cast <char const*> (&(*blocks_)[index]), sizeof(value_type));
 		}
+		writer.put('\n');
 	}
 	return true;
 }
 //--------------------------------------------------------------------------------------------------------------------
-bool BlockList::save_block_sequence(std::string const& filename, bool humanReadable)
+bool BlockList::save_block_sequence(std::string const& filename)
 {
 	std::ofstream writer{filename, std::ios_base::binary};
 	if (!writer.good())
