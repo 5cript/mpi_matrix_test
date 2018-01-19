@@ -20,7 +20,7 @@ namespace Mpi
 		}
 	}
 //--------------------------------------------------------------------------------------------------------------------
-	MPI_Comm Communicator::getHandle() const
+	MPI_Comm Communicator::get_handle() const
 	{
 		return com_;
 	}

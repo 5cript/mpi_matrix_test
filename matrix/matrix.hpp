@@ -6,6 +6,12 @@
 #include <string>
 #include <vector>
 
+/**
+ *	A matrix is the general data holding container which provides load and save capabilities, as well
+ *	as direct data access methods.
+ *
+ * The internal data representation is row-major.
+ */
 class Matrix
 {
 public: // Friends
@@ -79,6 +85,11 @@ public: // Functions
  	 *	Provides access to internal values.
 	 */
 	value_type* data();
+
+	/**
+ 	 *	Get a data offset to the specified line.
+	 */
+	value_type* get_line(int y);
 
 	/**
 	 *	Set the size of the matrix.

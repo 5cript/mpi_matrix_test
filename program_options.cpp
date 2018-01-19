@@ -5,6 +5,19 @@
 #include <boost/program_options.hpp>
 #include <iostream>
 
+std::ostream& operator<<(std::ostream& stream, WriteStrategy write_strategy)
+{
+	return stream << static_cast <int> (write_strategy);
+}
+
+std::istream& operator>>(std::istream& stream, WriteStrategy write_strategy)
+{
+	int wsInt = 0;
+	stream >> wsInt;
+	write_strategy = static_cast <WriteStrategy> (wsInt);
+	return stream;
+}
+
 boost::optional <ProgramOptions> parse_arguments(int argc, char** argv)
 {
 	namespace po = boost::program_options;
@@ -51,7 +64,7 @@ boost::optional <ProgramOptions> parse_arguments(int argc, char** argv)
 		)
 		(	
 			"write-strategy",
-			po::value(&opts.writeStrategy)->default_value(1),
+			po::value(&opts.writeStrategy)->default_value(WriteStrategy::SharedFile),
 			"The strategy to use to collect the result matrix. 0 = gather over net, 1 = collective file write"
 		)
 	;
@@ -66,7 +79,7 @@ boost::optional <ProgramOptions> parse_arguments(int argc, char** argv)
     if (opts.rightMatrix.empty())
         opts.rightMatrix = synthesize_file_name("/bigwork/nhmqebbe/data", "B", opts.dimension, opts.humanReadableInput);
 	if (opts.resultMatrix.empty())
-		opts.resultMatrix = synthesize_file_name("/bigwork/nhmqebbe/data", "C", opts.dimension, opts.humanReadableOutput);
+		opts.resultMatrix = synthesize_file_name("/bigwork/nhmqebbe/data", "M", opts.dimension, opts.humanReadableOutput);
 
 	if (vm.count("help"))
     {

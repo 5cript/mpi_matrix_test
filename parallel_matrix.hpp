@@ -5,6 +5,13 @@
 #include "matrix/forward.hpp"
 
 #include <set>
+#include <utility>
+
+/**
+ *	Get the coordinates of this instance. There may be more blocks in total than instances.
+ *	This is what the offset parameter is for. The offset should be a multiple of ctx.size().
+ */
+std::pair <int, int> getMyCoordinates(Mpi::Context& ctx, int blocksPerRow, int offset);
 
 /**
  *  Performs a parallelized matrix multiplication on matrices that are loaded based

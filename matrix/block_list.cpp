@@ -57,7 +57,7 @@ bool BlockList::save_matrix(std::string const& filename, bool humanReadable)
 				writer << ";";
 			}
 			else
-				writer.write(reinterpret_cast <char const*> (&(*blocks_)[index]), sizeof(value_type));
+				writer.write(reinterpret_cast <char const*> (&(*blocks_)[index]), sizeof(Matrix::value_type));
 		}
 		writer.put('\n');
 	}
