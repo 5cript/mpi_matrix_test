@@ -15,7 +15,9 @@ int main(int argc, char** argv)
 	Mpi::Context ctx{options.get().root};   
 
 	// Actual Job
-    parallel_multiplication(ctx, options.get());
+	ParallelContext mmContext{ctx, options.get()};
+	mmContext.do_multiplication();
+    //parallel_multiplication(ctx, options.get());
 
 	return 0;
 }

@@ -31,7 +31,7 @@ public: // Functions
 	Matrix(std::string const& binaryFile, int dimension);
 
 	/**
- 	 *	Creates an empty matrix of a specific size.
+ 	 *	Creates an empty matrix of a specific size (WARNING does allocation).
 	 */
 	Matrix(int dimension);
 

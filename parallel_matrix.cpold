@@ -10,27 +10,24 @@
 ParallelContext::ParallelContext(Mpi::Context& ctx, ProgramOptions const& options)
 	: ctx{ctx}
 	, options{options}
-	, communicator{&ctx}
 	, stamps{}
+	, communicator{&ctx}
 	, dimension{options.dimension}
 	, blockWidth{0}
 	, div{0}
-	, leftSharedFile_{MPI_COMM_WORLD, options.leftMatrix, Mpi::FileStreamDirection::Read}
-	, rightSharedFile_{MPI_COMM_WORLD, options.rightMatrix, Mpi::FileStreamDirection::Read}
-	, resultSharedFile_{MPI_COMM_WORLD, options.resultMatrix, Mpi::FileStreamDirection::Write}
-	, loader_{}
+	, leftSharedFile_{MPI_COMM_WORLD, options.leftMatrix, FileStreamDirection::Read}
+	, rightSharedFile_{MPI_COMM_WORLD, options.rightMatrix, FileStreamDirection::Read}
+	, resultSharedFile_{MPI_COMM_WORLD, options.resultMatrix, FileStreamDirection::Write}
 {
 	stamps.add("communicator_constructed");
 }
 //--------------------------------------------------------------------------------------------------------------------
 void ParallelContext::legacy_broadcast()
 {		
-	/*	
 	stamps.add("broadcast_whole");
 	communicator.broadcast <Matrix::value_type> (lhs.data(), lhs.data_size());
 	communicator.broadcast <Matrix::value_type> (rhs.data(), rhs.data_size());
 	stamps.add("broadcast_whole_end");
-	*/
 }
 //--------------------------------------------------------------------------------------------------------------------
 void ParallelContext::calculate_partitioning()
@@ -47,7 +44,7 @@ void ParallelContext::show_partitioning()
 		std::cout << "width of a block:\t" << blockWidth << "\n";
 		std::cout << "mpi instances:\t\t" << ctx.size() << "\n";
 		std::cout << "total blocks:\t\t" << (dimension/blockWidth)*(dimension/blockWidth) << "\n";
-		std::cout << "rest:\t\t\t" << (dimension/blockWidth)*(dimension/blockWidth) - ctx.size() << "\n";
+		std::cout << "rest:\t\t\t" << (dimension/blockWidth)*(dimension/blockWidth) - instanceCount << "\n";
 	}
 }
 //--------------------------------------------------------------------------------------------------------------------
@@ -58,19 +55,22 @@ void ParallelContext::do_multiplication()
 	show_partitioning();
 
 	load_own_blocks();
+
+	return 0;
 	/// REMOVE ME END	
 }
 //--------------------------------------------------------------------------------------------------------------------
-void ParallelContext::load_own_blocks(int cycle)
+void ParallelContext::load_own_blocks()
 {
-	loader_ = std::make_unique <MatrixLoader> (&communicator, cycle * ctx.size() + ctx.id(), ctx.size(), div, blockWidth);
-
-	loader_->load_local(leftSharedFile_, rightSharedFile_);	
+	PullInstruction pulledBlocks{ctx.id(), ctx.size(), div};
+	std::cout << pulledBlocks.left_ << "\n";
+	std::cout << pulledBlocks.right_ << "\n";
+	std::cout << pulledBlocks.loadResponsibility_ << "\n";
 }
 //--------------------------------------------------------------------------------------------------------------------
 int parallel_multiplication(Mpi::Context& ctx, ProgramOptions const& options)
 {
-	/*
+
 	// result can be just one block.
 	Matrix resultBlock{blockWidth};	
 	auto resultBlockView = MatrixPartition{&resultBlock, 1, ctx.size()};
@@ -199,7 +199,6 @@ int parallel_multiplication(Mpi::Context& ctx, ProgramOptions const& options)
 	if (ctx.is_root())
 		stamps.dump();
 	return 0;
-	*/
 }
 //--------------------------------------------------------------------------------------------------------------------
 int load_matrices(Mpi::Context& ctx, ProgramOptions const& options, Matrix& lhs, Matrix& rhs)

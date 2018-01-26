@@ -4,8 +4,57 @@
 #include "mpi/mpi_core.hpp"
 #include "matrix/forward.hpp"
 
+#include "bench/benchhelp.hpp"
+#include "container_print.hpp"
+#include "matrix/matrix_loader.hpp"
+
+#include "mpi/communicator.hpp"
+#include "mpi/group.hpp"
+#include "mpi/shared_file.hpp"
+
+#include "matrix/matrix.hpp"
+#include "matrix/matrix_partition.hpp"
+#include "matrix/block_list.hpp"
+#include "matrix/matrix_loader.hpp"
+
 #include <set>
 #include <utility>
+
+class ParallelContext
+{
+public:
+	ParallelContext(Mpi::Context& ctx, ProgramOptions const& options);
+
+	ParallelContext& operator=(ParallelContext const&) = delete;
+	ParallelContext& operator=(ParallelContext&&) = delete;
+	ParallelContext(ParallelContext const&) = delete;
+	ParallelContext(ParallelContext&&) = delete;
+
+	void legacy_broadcast();
+	void do_multiplication();
+
+	/**
+ 	 *	Load the own matrix blocks for the given cycle.
+	 */
+	void load_own_blocks(int cycle = 0);
+
+private:
+	void calculate_partitioning();
+	void show_partitioning();
+
+private:
+	Mpi::Context& ctx;
+	ProgramOptions const& options;
+	Mpi::Communicator communicator;
+	TimeStampCollection stamps;
+	int dimension;
+	int blockWidth;
+	int div; // blocks per row or column
+	Mpi::SharedMatrixFile leftSharedFile_;
+	Mpi::SharedMatrixFile rightSharedFile_;
+	Mpi::SharedMatrixFile resultSharedFile_;
+	std::unique_ptr <MatrixLoader> loader_;
+};
 
 /**
  *	Get the coordinates of this instance. There may be more blocks in total than instances.

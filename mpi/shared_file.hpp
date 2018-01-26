@@ -24,9 +24,8 @@ namespace Mpi
  		 *	Read a block from a matrix.
 		 *
 		 *	@warning The matrix must have been allocated beforehand.
-		 */
-		/*		
-		void readBlock(BlockDescritpor descriptor, int totalDimension)
+		 */		
+		void readBlock(BlockDescriptor descriptor, int totalDimension)
 		{
 			auto readLine = [this, &descriptor, &totalDimension](int yb) -> int {
 				auto* line = descriptor.matrix->get_line(yb);
@@ -42,8 +41,17 @@ namespace Mpi
 					MPI_STATUS_IGNORE
 				);
 			};
+
+			for (int y = 0; y != descriptor.matrix->dimension(); ++y)
+			{		
+				int res = readLine(y);
+				if (res != MPI_SUCCESS)
+				{
+					print_error(res);
+					break;
+				}
+			}
 		}
-		*/
 
 		/**
 		 *	Write a block to the matrix.

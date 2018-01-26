@@ -26,5 +26,5 @@ operator<<(std::ostream& s, ContainerT<T...> t)
     }
     //++i;
     s << *i;
-    return s << ']' << std::endl;
+    return s << ']';
 }
