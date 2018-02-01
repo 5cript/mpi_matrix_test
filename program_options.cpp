@@ -1,5 +1,6 @@
 #include "program_options.hpp"
 #include "helpers.hpp"
+#include "constants.hpp"
 
 #include <boost/version.hpp>
 #include <boost/program_options.hpp>
@@ -59,7 +60,7 @@ boost::optional <ProgramOptions> parse_arguments(int argc, char** argv)
 		)
 		(
 			"chunk-dump-dir", 
-			po::value(&opts.partResultDirectory)->default_value("/bigwork/nhmqebbe/results"), 
+            po::value(&opts.partResultDirectory)->default_value(default_chunk_dump),
 			"The directory where intermediary chunks are stored. This setting is ignored, if 'save-chunks' is not set."	
 		)
 		(	
@@ -75,11 +76,13 @@ boost::optional <ProgramOptions> parse_arguments(int argc, char** argv)
 
 	// default matrix locations (for LUH cluster):
 	if (opts.leftMatrix.empty())
-        opts.leftMatrix = synthesize_file_name("/bigwork/nhmqebbe/data", "A", opts.dimension, opts.humanReadableInput);
+        opts.leftMatrix = synthesize_file_name(matrix_default_location, "A", opts.dimension, opts.humanReadableInput);
+
     if (opts.rightMatrix.empty())
-        opts.rightMatrix = synthesize_file_name("/bigwork/nhmqebbe/data", "B", opts.dimension, opts.humanReadableInput);
+        opts.rightMatrix = synthesize_file_name(matrix_default_location, "B", opts.dimension, opts.humanReadableInput);
+
 	if (opts.resultMatrix.empty())
-		opts.resultMatrix = synthesize_file_name("/bigwork/nhmqebbe/data", "M", opts.dimension, opts.humanReadableOutput);
+        opts.resultMatrix = synthesize_file_name(matrix_default_location, "M", opts.dimension, opts.humanReadableOutput);
 
 	if (vm.count("help"))
     {

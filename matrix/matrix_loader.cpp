@@ -1,7 +1,7 @@
 #include "matrix_loader.hpp"
 #include "../container_print.hpp"
 
-#include "mpi/group.hpp"
+#include "../mpi/group.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -102,9 +102,9 @@ void MatrixLoader::load_local(Mpi::SharedMatrixFile& left, Mpi::SharedMatrixFile
 void MatrixLoader::share_blocks()
 {
 	Mpi::WorldGroup world;
-	void pullSide = [this, &]()
+    auto pullSide = [this, &world]()
 	{
-		Mpi::SubGroup distributionNet{world, subGroupIds};
+        //Mpi::SubGroup distributionNet{world, subGroupIds};
 
 			
 	};
