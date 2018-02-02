@@ -36,7 +36,7 @@ public:
 	/**
  	 *	Load the own matrix blocks for the given cycle.
 	 */
-	void load_own_blocks(int cycle = 0);
+	void load_blocks(int cycle = 0);
 
 private:
 	void calculate_partitioning();

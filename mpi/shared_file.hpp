@@ -5,6 +5,7 @@
 #include "types.hpp"
 
 #include "../matrix/block_descriptor.hpp"
+#include "../matrix/matrix_value_type.hpp"
 
 namespace Mpi
 {
@@ -25,7 +26,8 @@ namespace Mpi
 		 *
 		 *	@warning The matrix must have been allocated beforehand.
 		 */		
-		void readBlock(BlockDescriptor descriptor, int totalDimension)
+		template <typename MatrixViewT>
+		void readBlock(BlockDescriptor <MatrixViewT> descriptor, int totalDimension)
 		{
 			auto readLine = [this, &descriptor, &totalDimension](int yb) -> int {
 				auto* line = descriptor.matrix->get_line(yb);
@@ -37,7 +39,7 @@ namespace Mpi
 					fileOffset, 
 					line, 
 					descriptor.matrix->dimension(), 
-					ConvertToMpiType <Matrix::value_type>::value, 
+					ConvertToMpiType <matrix_value_type>::value, 
 					MPI_STATUS_IGNORE
 				);
 			};
@@ -56,7 +58,8 @@ namespace Mpi
 		/**
 		 *	Write a block to the matrix.
 		 */
-		void writeBlock(BlockDescriptor descriptor, int totalDimension)
+		template <typename MatrixViewT>
+		void writeBlock(BlockDescriptor <MatrixViewT> descriptor, int totalDimension)
 		{
 			auto writeLine = [this, &descriptor, &totalDimension](int yb) -> int {
 				auto* line = descriptor.matrix->get_line(yb);
@@ -68,7 +71,7 @@ namespace Mpi
 					fileOffset, 
 					line, 
 					descriptor.matrix->dimension(), 
-					ConvertToMpiType <Matrix::value_type>::value, 
+					ConvertToMpiType <matrix_value_type>::value, 
 					MPI_STATUS_IGNORE
 				);
 			};
@@ -91,7 +94,18 @@ namespace Mpi
 		SharedMatrixFile(SharedMatrixFile&&) = delete;
 
 	private:
-		long long calculateFileOffset(BlockDescriptor const& descriptor, int totalDimension, int yb);
+		template <typename MatrixViewT>
+		long long calculateFileOffset(BlockDescriptor <MatrixViewT> const& descriptor, int totalDimension, int yb)
+		{
+			long long fileOffset = 
+				descriptor.x * descriptor.matrix->dimension() + 
+				descriptor.y * descriptor.matrix->dimension() * totalDimension +				 
+				yb * totalDimension		 
+			;	
+
+			fileOffset *= sizeof(matrix_value_type);	
+			return fileOffset;
+		}
 
 	private:
 		MPI_File handle_;

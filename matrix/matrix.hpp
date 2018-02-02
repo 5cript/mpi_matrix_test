@@ -1,6 +1,7 @@
 #pragma once
 
 #include "forward.hpp"
+#include "matrix_value_type.hpp"
 
 #include <cstdint>
 #include <string>
@@ -18,7 +19,7 @@ public: // Friends
 	friend MatrixBlock;
 
 public: // Typedef
-	using value_type = int32_t;
+	using value_type = matrix_value_type;
 
 public: // Functions
 	Matrix() = default;

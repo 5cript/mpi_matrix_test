@@ -1,25 +1,31 @@
 #include "matrix_vector.hpp"
 
 //####################################################################################################################
-MatrixVector::MatrixVector(int size = 0)
-	: matrices_(size)
+MatrixVector::MatrixVector(int blockDimension, int vectorSize)
+	: data_(blockDimension*blockDimension*vectorSize) // intentional std::vector() constructor
+	, blockDimension_{blockDimension}
+	, vectorSize_{vectorSize}
 {
 	
 }
-//---------------------------------------------------------------------------------------------------------------------
-MatrixVector::MatrixVector()
-	: matrices_{}
+//--------------------------------------------------------------------------------------------------------------------
+Matrix::value_type* MatrixVector::data()
 {
-
+	return &data_.front();
+}	
+//--------------------------------------------------------------------------------------------------------------------
+int MatrixVector::get_block_dimension()
+{
+	return blockDimension_;
 }
-//---------------------------------------------------------------------------------------------------------------------
-Matrix* MatrixVector::get(std::size_t which)
+//--------------------------------------------------------------------------------------------------------------------
+int MatrixVector::size()
 {
-	return &matrices_[which];
+	return vectorSize_;
 }
-//---------------------------------------------------------------------------------------------------------------------
-std::vector <Matrix>* MatrixVector::get()
+//--------------------------------------------------------------------------------------------------------------------
+MatrixVectorView MatrixVector::get(int index)
 {
-	return &matrices_;
+	return {this, index};
 }
 //####################################################################################################################

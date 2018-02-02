@@ -1,12 +1,16 @@
 #pragma once
 
-#include "../matrix/matrix.hpp"
-
+template <typename T>
 struct BlockDescriptor
 {
-	BlockDescriptor(Matrix* matrix, int blockX, int blockY);
+	BlockDescriptor(T* matrix, int blockX, int blockY)
+		: matrix{matrix}
+		, x{blockX}
+		, y{blockY}
+	{
+	}
 
-	Matrix* matrix;
+	T* matrix;
 	int x;
 	int y;
 };

@@ -1,10 +1,13 @@
 #include "matrix_loader.hpp"
-#include "../container_print.hpp"
+#include "matrix_vector_view.hpp"
 
+#include "../container_print.hpp"
 #include "../mpi/group.hpp"
+#include "../mpi/types.hpp"
 
 #include <algorithm>
 #include <iostream>
+#include <type_traits>
 
 //#####################################################################################################################
 struct StepGenerator
@@ -81,33 +84,66 @@ MatrixLoader::MatrixLoader(
 //---------------------------------------------------------------------------------------------------------------------
 void MatrixLoader::load_local(Mpi::SharedMatrixFile& left, Mpi::SharedMatrixFile& right)
 {	
-	leftVector_ = std::make_unique <MatrixVector> (blocksPerRC_);
-	rightVector_ = std::make_unique <MatrixVector> (blocksPerRC_);
+	leftVector_ = std::make_unique <MatrixVector> (blockDimension_, blocksPerRC_);
+	rightVector_ = std::make_unique <MatrixVector> (blockDimension_, blocksPerRC_);
  
 	for (auto const& load : instruction_.loadResponsibility)
 	{
 		auto y = load / blocksPerRC_;
 		auto x = load % blocksPerRC_;	
 
-		auto* leftLoadedMatrix = leftVector_->get(x);
-		leftLoadedMatrix->resize(blockDimension_);
-		left.readBlock({leftLoadedMatrix, x, y}, blockDimension_ * blocksPerRC_);
+		auto leftLoadedMatrix = leftVector_->get(x);
+		//leftLoadedMatrix->resize(blockDimension_);
+		left.readBlock <MatrixVectorView>({&leftLoadedMatrix, x, y}, blockDimension_ * blocksPerRC_);
 
-		auto* rightLoadedMatrix = rightVector_->get(y);
-		rightLoadedMatrix->resize(blockDimension_);
-		right.readBlock({leftLoadedMatrix, x, y}, blockDimension_ * blocksPerRC_);
+		auto rightLoadedMatrix = rightVector_->get(y);
+		//rightLoadedMatrix->resize(blockDimension_);
+		right.readBlock <MatrixVectorView>({&leftLoadedMatrix, x, y}, blockDimension_ * blocksPerRC_);
 	}
 }
 //---------------------------------------------------------------------------------------------------------------------
 void MatrixLoader::share_blocks()
 {
 	Mpi::WorldGroup world;
-    auto pullSide = [this, &world]()
-	{
-        //Mpi::SubGroup distributionNet{world, subGroupIds};
+    auto pullSide = [this, &world](auto& vector, auto const& blocks)
+	{	
+		std::decay_t <decltype(blocks)> firstRound{};
+		std::decay_t <decltype(blocks)> secondRound{};
+		for (auto const& i : blocks)
+		{
+			if (i < instanceCount_)
+				firstRound.push_back(i);
+			else	
+				secondRound.push_back(i);
+		};
 
-			
+		std::cout << firstRound << "\n";
+        Mpi::SubGroup distributionNet{world, firstRound};	
+		auto subcom = distributionNet.create_communicator();
+		MPI_Gather(
+			vector->get(instanceId_).get_line(0), 
+			blockDimension_ * blockDimension_,
+			Mpi::ConvertToMpiType <matrix_value_type>::value,
+			vector->get(instanceId_).get_line(0), 
+			blockDimension_ * blockDimension_,
+			Mpi::ConvertToMpiType <matrix_value_type>::value,
+			instanceId_,
+			subcom
+		);
+
+		MPI_Comm_free(&subcom);
 	};
+
+	if (instanceId_ == 2)
+	{
+		std::cout << instruction_.left << "\n";
+		std::cout << instruction_.right << "\n";
+		std::cout << instruction_.loadResponsibility << "\n";
+	}
+
+	pullSide(leftVector_, instruction_.left);
+	pullSide(rightVector_, instruction_.right);
+
 	/*	
 	for (int i = 0; i != instruction_.left; ++i)
 	{

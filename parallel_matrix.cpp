@@ -57,19 +57,20 @@ void ParallelContext::do_multiplication()
 	calculate_partitioning();
 	show_partitioning();
 
-	load_own_blocks();
-	/// REMOVE ME END	
+	load_blocks();
 }
 //--------------------------------------------------------------------------------------------------------------------
-void ParallelContext::load_own_blocks(int cycle)
+void ParallelContext::load_blocks(int cycle)
 {
 	loader_ = std::make_unique <MatrixLoader> (&communicator, cycle * ctx.size() + ctx.id(), ctx.size(), div, blockWidth);
 
 	loader_->load_local(leftSharedFile_, rightSharedFile_);	
+	loader_->share_blocks();
 }
-//--------------------------------------------------------------------------------------------------------------------
+//####################################################################################################################
 int parallel_multiplication(Mpi::Context& ctx, ProgramOptions const& options)
 {
+	return 255;
 	/*
 	// result can be just one block.
 	Matrix resultBlock{blockWidth};	

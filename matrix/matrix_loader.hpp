@@ -14,11 +14,9 @@ struct PullInstruction
 public:
 	PullInstruction(int instanceId, int instanceCount, int blocksPerRC);
 
-//private:
 	std::vector <int> left; // loaded blocks for left matrix.
 	std::vector <int> right; // loaded blocks for right matrix.
-	/// Load responsibilities are for both sides.
-	std::set <int> loadResponsibility;
+	std::set <int> loadResponsibility; /// Load responsibilities are for both sides.
 };
 
 /**

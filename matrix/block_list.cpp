@@ -33,7 +33,7 @@ void BlockList::print_block(int x, int y)
 //--------------------------------------------------------------------------------------------------------------------
 bool BlockList::save_matrix(std::string const& filename, bool humanReadable)
 {
-	auto blockDataSize = blockDimension_*blockDimension_;
+	//auto blockDataSize = blockDimension_*blockDimension_;
 	auto blocksPerRow = overallDimension_ / blockDimension_;
 
 	std::ofstream writer{filename, std::ios_base::binary};
@@ -70,7 +70,7 @@ bool BlockList::save_block_sequence(std::string const& filename)
 	if (!writer.good())
 		return false;
 
-	for (int i = 0; i != blocks_->size(); ++i)
+	for (std::size_t i = 0; i != blocks_->size(); ++i)
 	{
 		if (i%blockDimension_ == 0)
 			writer << "\n";
