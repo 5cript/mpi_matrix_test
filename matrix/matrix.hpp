@@ -8,6 +8,25 @@
 #include <vector>
 
 /**
+ * @brief Convenience class for accessing a matrix with operator[].
+ */
+class MatrixSubscriptProxy
+{
+public:
+    friend Matrix;
+
+public:
+    matrix_value_type& operator[](int y);
+
+private:
+    MatrixSubscriptProxy(Matrix* owner, int x);
+
+private:
+    Matrix* owner_;
+    int x_;
+};
+
+/**
  *	A matrix is the general data holding container which provides load and save capabilities, as well
  *	as direct data access methods.
  *
@@ -17,6 +36,7 @@ class Matrix
 {
 public: // Friends
 	friend MatrixBlock;
+    friend MatrixSubscriptProxy;
 
 public: // Typedef
 	using value_type = matrix_value_type;
@@ -120,6 +140,22 @@ public: // Functions
 	Matrix(Matrix const&) = delete;
 
 	Matrix(Matrix&&) = default;
+
+    /**
+     * @brief operator [] to access individual cells. Use is discouraged
+     * @param y
+     * @return A subscript proxy to go further down on x values.
+     */
+    MatrixSubscriptProxy operator[](int x);
+
+    /**
+     * @brief Faster alternative to operator[][].
+     * @return
+     */
+    value_type& at(int x, int y)
+    {
+        return *(&data_.front() + x + y * dimension_);
+    }
 
 	/**
 	 *  Generates a random matrix

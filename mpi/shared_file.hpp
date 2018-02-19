@@ -15,6 +15,15 @@ namespace Mpi
 		Write
 	};
 
+    struct FileView
+    {
+        int displacement{0};
+        MPI_Datatype elementaryType{ConvertToMpiType <matrix_value_type>::value};
+        MPI_Datatype filetype;
+    };
+
+    FileView make_matrix_file_view(int blockDimension);
+
 	class SharedMatrixFile
 	{
 	public:
@@ -27,7 +36,7 @@ namespace Mpi
 		 *	@warning The matrix must have been allocated beforehand.
 		 */		
 		template <typename MatrixViewT>
-		void readBlock(BlockDescriptor <MatrixViewT> descriptor, int totalDimension)
+        void readBlock(BlockDescriptor <MatrixViewT> descriptor, int totalDimension)
 		{
 			auto readLine = [this, &descriptor, &totalDimension](int yb) -> int {
 				auto* line = descriptor.matrix->get_line(yb);
@@ -59,14 +68,17 @@ namespace Mpi
 		 *	Write a block to the matrix.
 		 */
 		template <typename MatrixViewT>
-		void writeBlock(BlockDescriptor <MatrixViewT> descriptor, int totalDimension)
+        void writeBlock(BlockDescriptor <MatrixViewT> descriptor, int totalDimension, bool at_all)
 		{
-			auto writeLine = [this, &descriptor, &totalDimension](int yb) -> int {
+            auto writeLine = [this, &descriptor, &totalDimension, &at_all](int yb) -> int {
 				auto* line = descriptor.matrix->get_line(yb);
 				auto fileOffset = calculateFileOffset(descriptor, totalDimension, yb);
 
-				//return MPI_File_write_at_all(
-				return MPI_File_write_at(
+                auto* func = MPI_File_write_at;
+                if (at_all)
+                    func = MPI_File_write_at_all;
+
+                return func(
 					handle_, 
 					fileOffset, 
 					line, 
@@ -86,6 +98,8 @@ namespace Mpi
 				}
 			}
 		}
+
+        void imbue_view(FileView const& view);
 		
 		SharedMatrixFile& operator=(SharedMatrixFile const&) = delete;
 		SharedMatrixFile& operator=(SharedMatrixFile&&) = delete;		

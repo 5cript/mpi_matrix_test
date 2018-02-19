@@ -33,10 +33,18 @@ public:
 	void legacy_broadcast();
 	void do_multiplication();
 
+    void perform();
+
 	/**
  	 *	Load the own matrix blocks for the given cycle.
 	 */
-	void load_blocks(int cycle = 0);
+    void load_blocks(int cycle = 0);
+
+    void use_write_at_all(bool waa);
+
+    void imbue_views();
+
+    void dump_stamps_sync();
 
 private:
 	void calculate_partitioning();
@@ -50,10 +58,13 @@ private:
 	int dimension;
 	int blockWidth;
 	int div; // blocks per row or column
+    int x; // my x block coordinate
+    int y; // my y block coordinate
+    bool writeAtAll;
 	Mpi::SharedMatrixFile leftSharedFile_;
 	Mpi::SharedMatrixFile rightSharedFile_;
 	Mpi::SharedMatrixFile resultSharedFile_;
-	std::unique_ptr <MatrixLoader> loader_;
+    std::unique_ptr <MatrixStorage> storage_;
 };
 
 /**

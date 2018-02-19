@@ -11,11 +11,11 @@ std::ostream& operator<<(std::ostream& stream, WriteStrategy write_strategy)
 	return stream << static_cast <int> (write_strategy);
 }
 
-std::istream& operator>>(std::istream& stream, WriteStrategy write_strategy)
+std::istream& operator>>(std::istream& stream, WriteStrategy& write_strategy)
 {
-	int wsInt = 0;
-	stream >> wsInt;
-	write_strategy = static_cast <WriteStrategy> (wsInt);
+    int wsInt = 0;
+    stream >> wsInt;
+    write_strategy = static_cast <WriteStrategy> (wsInt);
 	return stream;
 }
 
@@ -81,10 +81,10 @@ boost::optional <ProgramOptions> parse_arguments(int argc, char** argv)
     if (opts.rightMatrix.empty())
         opts.rightMatrix = synthesize_file_name(matrix_default_location, "B", opts.dimension, opts.humanReadableInput);
 
-	if (opts.resultMatrix.empty())
+    if (opts.resultMatrix.empty())
         opts.resultMatrix = synthesize_file_name(matrix_default_location, "M", opts.dimension, opts.humanReadableOutput);
 
-	if (vm.count("help"))
+    if (vm.count("help"))
     {
 	    std::cout << desc << "\n";
 	    return boost::none;

@@ -2,7 +2,8 @@
 
 #include <iostream>
 #include <memory>
-#include <algorithm>    
+#include <algorithm>
+#include <stdexcept>
 
 #define DO_TRANSMIT
 
@@ -15,12 +16,15 @@ ParallelContext::ParallelContext(Mpi::Context& ctx, ProgramOptions const& option
 	, dimension{options.dimension}
 	, blockWidth{0}
 	, div{0}
+    , x{0}
+    , y{0}
+    , writeAtAll{false}
 	, leftSharedFile_{MPI_COMM_WORLD, options.leftMatrix, Mpi::FileStreamDirection::Read}
 	, rightSharedFile_{MPI_COMM_WORLD, options.rightMatrix, Mpi::FileStreamDirection::Read}
 	, resultSharedFile_{MPI_COMM_WORLD, options.resultMatrix, Mpi::FileStreamDirection::Write}
-	, loader_{}
+    , storage_{}
 {
-	stamps.add("communicator_constructed");
+    stamps.add("Stamp Maker Constructed");
 }
 //--------------------------------------------------------------------------------------------------------------------
 void ParallelContext::legacy_broadcast()
@@ -36,7 +40,32 @@ void ParallelContext::legacy_broadcast()
 void ParallelContext::calculate_partitioning()
 {
 	blockWidth = MatrixPartition::optimal_partitioning(dimension, ctx.size());
-	div = dimension/blockWidth;
+    div = dimension/blockWidth;
+    x = ctx.id() % div;
+    y = ctx.id() / div;
+}
+//--------------------------------------------------------------------------------------------------------------------
+void ParallelContext::use_write_at_all(bool waa)
+{
+    writeAtAll = waa;
+}
+//--------------------------------------------------------------------------------------------------------------------
+void ParallelContext::dump_stamps_sync()
+{
+    if (ctx.is_root())
+        stamps.dump();
+}
+//--------------------------------------------------------------------------------------------------------------------
+void ParallelContext::imbue_views()
+{
+    auto view = Mpi::make_matrix_file_view(blockWidth);
+    resultSharedFile_.imbue_view(view);
+
+    if (!options.humanReadableInput)
+    {
+        leftSharedFile_.imbue_view(view);
+        rightSharedFile_.imbue_view(view);
+    }
 }
 //--------------------------------------------------------------------------------------------------------------------
 void ParallelContext::show_partitioning()
@@ -53,22 +82,58 @@ void ParallelContext::show_partitioning()
 //--------------------------------------------------------------------------------------------------------------------
 void ParallelContext::do_multiplication()
 {
+    stamps.add("Begin Multiplication");
+    Matrix result;
+    result.resize(blockWidth);
+    storage_->left()->multiply_with(*storage_->right(), &result);
+    stamps.add("End Multiplication");
+
+    if (options.saveChunks)
+    {
+        stamps.add("Start Intermediary Save");
+        save_intermediary(result, ctx, options, ctx.id());
+        stamps.add("End Intermediary Save");
+    }
+    else
+    {
+        stamps.add("Start Write Block");
+        resultSharedFile_.writeBlock(BlockDescriptor <Matrix> {&result, x, y}, dimension, writeAtAll);
+        stamps.add("End Write Block");
+    }
+}
+//--------------------------------------------------------------------------------------------------------------------
+void ParallelContext::perform()
+{
 	// determine the block width for the partitions (the matrix dimension is never prime)
 	calculate_partitioning();
 	show_partitioning();
 
+    if ((dimension/blockWidth)*(dimension/blockWidth) - ctx.size() != 0)
+    {
+        throw std::runtime_error{"Later in development, it has been decided, that imperfect partitionings (divisibles) are disallowed"};
+    }
+
 	load_blocks();
+    do_multiplication();
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    stamps.add("Done");
 }
 //--------------------------------------------------------------------------------------------------------------------
 void ParallelContext::load_blocks(int cycle)
 {
-	loader_ = std::make_unique <MatrixLoader> (&communicator, cycle * ctx.size() + ctx.id(), ctx.size(), div, blockWidth);
+    storage_ = std::make_unique <MatrixStorage> (&communicator, cycle * ctx.size() + ctx.id(), ctx.size(), div, blockWidth);
 
-	loader_->load_local(leftSharedFile_, rightSharedFile_);	
-	loader_->share_blocks();
+    stamps.add("Load Local Start");
+    storage_->load_local(leftSharedFile_, rightSharedFile_);
+    stamps.add("Load Local End");
+    stamps.add("Share Blocks Start");
+    storage_->share_blocks();
+    stamps.add("Share Blocks Local End");
 }
 //####################################################################################################################
-int parallel_multiplication(Mpi::Context& ctx, ProgramOptions const& options)
+int parallel_multiplication(Mpi::Context&, ProgramOptions const&)
 {
 	return 255;
 	/*

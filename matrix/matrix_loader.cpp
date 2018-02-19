@@ -61,10 +61,10 @@ PullInstruction::PullInstruction(int instanceId, int instanceCount, int blocksPe
 	eraseSelf(left);
 	eraseSelf(right);
 
-	std::cout << instanceId << ": [" << left << ", " << right << "]\n";
+    //std::cout << instanceId << ": [" << left << ", " << right << "]\n";
 }
 //#####################################################################################################################
-MatrixLoader::MatrixLoader(
+MatrixStorage::MatrixStorage(
 	Mpi::Communicator* communicator, 
 	int instanceId, 
 	int instanceCount, 
@@ -82,7 +82,7 @@ MatrixLoader::MatrixLoader(
 {
 }
 //---------------------------------------------------------------------------------------------------------------------
-void MatrixLoader::load_local(Mpi::SharedMatrixFile& left, Mpi::SharedMatrixFile& right)
+void MatrixStorage::load_local(Mpi::SharedMatrixFile& left, Mpi::SharedMatrixFile& right)
 {	
 	leftVector_ = std::make_unique <MatrixVector> (blockDimension_, blocksPerRC_);
 	rightVector_ = std::make_unique <MatrixVector> (blockDimension_, blocksPerRC_);
@@ -98,57 +98,58 @@ void MatrixLoader::load_local(Mpi::SharedMatrixFile& left, Mpi::SharedMatrixFile
 
 		auto rightLoadedMatrix = rightVector_->get(y);
 		//rightLoadedMatrix->resize(blockDimension_);
-		right.readBlock <MatrixVectorView>({&leftLoadedMatrix, x, y}, blockDimension_ * blocksPerRC_);
+        right.readBlock <MatrixVectorView>({&rightLoadedMatrix, x, y}, blockDimension_ * blocksPerRC_);
 	}
 }
 //---------------------------------------------------------------------------------------------------------------------
-void MatrixLoader::share_blocks()
+MatrixVector* MatrixStorage::left()
+{
+    return leftVector_.get();
+}
+//---------------------------------------------------------------------------------------------------------------------
+MatrixVector* MatrixStorage::right()
+{
+    return rightVector_.get();
+}
+//---------------------------------------------------------------------------------------------------------------------
+void MatrixStorage::share_blocks()
 {
 	Mpi::WorldGroup world;
     auto pullSide = [this, &world](auto& vector, auto const& blocks)
-	{	
-		std::decay_t <decltype(blocks)> firstRound{};
-		std::decay_t <decltype(blocks)> secondRound{};
-		for (auto const& i : blocks)
-		{
-			if (i < instanceCount_)
-				firstRound.push_back(i);
-			else	
-				secondRound.push_back(i);
-		};
+    {
+        auto subnet = blocks;
+        auto responsibility = *instruction_.loadResponsibility.begin();
+        subnet.push_back(responsibility);
 
-		std::cout << firstRound << "\n";
-        Mpi::SubGroup distributionNet{world, firstRound};	
-		auto subcom = distributionNet.create_communicator();
-		MPI_Gather(
-			vector->get(instanceId_).get_line(0), 
-			blockDimension_ * blockDimension_,
-			Mpi::ConvertToMpiType <matrix_value_type>::value,
-			vector->get(instanceId_).get_line(0), 
-			blockDimension_ * blockDimension_,
-			Mpi::ConvertToMpiType <matrix_value_type>::value,
-			instanceId_,
-			subcom
-		);
+        // Sort numbers to have identical subcommunicators
+        std::sort(std::begin(subnet), std::end(subnet));
 
-		MPI_Comm_free(&subcom);
-	};
+        // Find out which vector index is the one with the loaded chunk
+        auto respIndex = std::find(std::begin(subnet), std::end(subnet), responsibility) - std::begin(subnet);
 
-	if (instanceId_ == 2)
-	{
-		std::cout << instruction_.left << "\n";
-		std::cout << instruction_.right << "\n";
-		std::cout << instruction_.loadResponsibility << "\n";
-	}
+        //std::cout << "sharing_net: " << subnet << " LR: " << respIndex << "\n";
 
-	pullSide(leftVector_, instruction_.left);
-	pullSide(rightVector_, instruction_.right);
+        // Create Subcommunicator:
+        Mpi::SubGroup distributionNet{world, subnet};
+        auto subcom = distributionNet.create_communicator();
 
-	/*	
-	for (int i = 0; i != instruction_.left; ++i)
-	{
-		 
-	}
-	*/
+        // Spread chunks over net.
+        MPI_Allgather
+        (
+            vector->get(respIndex).get_line(0),
+            //vector->get(0).get_line(0),
+            blockDimension_ * blockDimension_,
+            Mpi::ConvertToMpiType <matrix_value_type>::value,
+            vector->get(0).get_line(0),
+            blockDimension_ * blockDimension_,
+            Mpi::ConvertToMpiType <matrix_value_type>::value,
+            subcom
+        );
+
+        MPI_Comm_free(&subcom);
+    };
+
+    pullSide(leftVector_, instruction_.left);
+    pullSide(rightVector_, instruction_.right);
 }
 //#####################################################################################################################

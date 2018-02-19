@@ -19,8 +19,12 @@ std::string synthesize_file_name(
 	     << dimension
     ;
     if (humanReadable)
+    {
         sstr << ".data";
+    }
     else
+    {
         sstr << ".bin";
+    }
 	return sstr.str();
 }

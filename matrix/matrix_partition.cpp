@@ -5,7 +5,7 @@
 #include <iostream>
 
 //####################################################################################################################
-MatrixPartition::MatrixPartition(Matrix* matrix, int div, int mpiInstances)
+MatrixPartition::MatrixPartition(Matrix* matrix, int div, int)
 	: matrix_{matrix}
 	, div_{div}
 {

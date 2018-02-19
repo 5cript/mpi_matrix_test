@@ -22,7 +22,7 @@ public:
 	void clear();
 
 	/**
-	 *	target += this x with.
+     *	target += this * with.
 	 */
 	void accum_multiply(MatrixBlock const& with, MatrixBlock target);
 

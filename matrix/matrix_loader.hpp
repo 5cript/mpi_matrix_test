@@ -23,10 +23,10 @@ public:
  *	This class is designed to be used once per multiplication task of a client.
  *	Data is shared multiple times, when need arises, since some instances have to do work multiple times.
  */
-class MatrixLoader
+class MatrixStorage
 {
 public:
-	MatrixLoader(
+    MatrixStorage(
 		Mpi::Communicator* communicator, 
 		int instanceId, 
 		int instanceCount, 
@@ -37,6 +37,9 @@ public:
 public:
 	void load_local(Mpi::SharedMatrixFile& left, Mpi::SharedMatrixFile& right);
 	void share_blocks();
+
+    MatrixVector* left();
+    MatrixVector* right();
 
 private:
 	Mpi::Communicator* communicator_;

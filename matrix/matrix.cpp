@@ -10,6 +10,17 @@
 #define COORD(X, Y) (Y * dimension_ + X)
 #define DCOORD(X, Y, dim) (Y * dim + X)
 //#####################################################################################################################
+matrix_value_type& MatrixSubscriptProxy::operator[](int y)
+{
+    return owner_->data_[DCOORD(y, x_, owner_->dimension_)];
+}
+//---------------------------------------------------------------------------------------------------------------------
+MatrixSubscriptProxy::MatrixSubscriptProxy(Matrix* owner, int x)
+    : owner_{owner}
+    , x_{x}
+{
+}
+//#####################################################################################################################
 Matrix::Matrix(std::string const& binaryFile, int dimension)
 	: data_{}
 	, dimension_{dimension}
@@ -22,6 +33,11 @@ Matrix::Matrix(int dimension)
 	, dimension_{dimension}
 {
 	resize(dimension);
+}
+//---------------------------------------------------------------------------------------------------------------------
+MatrixSubscriptProxy Matrix::operator[](int x)
+{
+    return MatrixSubscriptProxy{this, x};
 }
 //---------------------------------------------------------------------------------------------------------------------
 Matrix::value_type* Matrix::get_line(int y)
