@@ -7,6 +7,8 @@
 #include "../matrix/block_descriptor.hpp"
 #include "../matrix/matrix_value_type.hpp"
 
+#include <string>
+
 namespace Mpi
 {
 	enum class FileStreamDirection
@@ -18,7 +20,7 @@ namespace Mpi
     struct FileView
     {
         int displacement{0};
-        MPI_Datatype elementaryType{ConvertToMpiType <matrix_value_type>::value};
+        MPI_Datatype elementaryType{TO_MPI_TYPE(matrix_value_type)};
         MPI_Datatype filetype;
     };
 
@@ -28,13 +30,21 @@ namespace Mpi
 	{
 	public:
 		SharedMatrixFile(MPI_Comm communicator, std::string const& filename, FileStreamDirection openMode);
+		SharedMatrixFile(
+            MPI_Comm communicator,
+            std::string const& filename,
+            FileStreamDirection openMode,
+            int striping_factor,
+            int striping_unit,
+            int cb_nodes
+        );
 		~SharedMatrixFile();
 
 		/**
  		 *	Read a block from a matrix.
 		 *
 		 *	@warning The matrix must have been allocated beforehand.
-		 */		
+		 */
 		template <typename MatrixViewT>
         void readBlock(BlockDescriptor <MatrixViewT> descriptor, int totalDimension)
 		{
@@ -44,17 +54,17 @@ namespace Mpi
 
 				//return MPI_File_read_at_all(
 				return MPI_File_read_at(
-					handle_, 
-					fileOffset, 
-					line, 
-					descriptor.matrix->dimension(), 
-					ConvertToMpiType <matrix_value_type>::value, 
+					handle_,
+					fileOffset,
+					line,
+					descriptor.matrix->dimension(),
+					TO_MPI_TYPE(matrix_value_type),
 					MPI_STATUS_IGNORE
 				);
 			};
 
 			for (int y = 0; y != descriptor.matrix->dimension(); ++y)
-			{		
+			{
 				int res = readLine(y);
 				if (res != MPI_SUCCESS)
 				{
@@ -79,17 +89,17 @@ namespace Mpi
                     func = MPI_File_write_at_all;
 
                 return func(
-					handle_, 
-					fileOffset, 
-					line, 
-					descriptor.matrix->dimension(), 
-					ConvertToMpiType <matrix_value_type>::value, 
+					handle_,
+					fileOffset,
+					line,
+					descriptor.matrix->dimension(),
+					TO_MPI_TYPE(matrix_value_type),
 					MPI_STATUS_IGNORE
 				);
 			};
 
 			for (int y = 0; y != descriptor.matrix->dimension(); ++y)
-			{		
+			{
 				int res = writeLine(y);
 				if (res != MPI_SUCCESS)
 				{
@@ -100,9 +110,9 @@ namespace Mpi
 		}
 
         void imbue_view(FileView const& view);
-		
+
 		SharedMatrixFile& operator=(SharedMatrixFile const&) = delete;
-		SharedMatrixFile& operator=(SharedMatrixFile&&) = delete;		
+		SharedMatrixFile& operator=(SharedMatrixFile&&) = delete;
 
 		SharedMatrixFile(SharedMatrixFile const&) = delete;
 		SharedMatrixFile(SharedMatrixFile&&) = delete;
@@ -111,17 +121,17 @@ namespace Mpi
 		template <typename MatrixViewT>
 		long long calculateFileOffset(BlockDescriptor <MatrixViewT> const& descriptor, int totalDimension, int yb)
 		{
-			long long fileOffset = 
-				descriptor.x * descriptor.matrix->dimension() + 
-				descriptor.y * descriptor.matrix->dimension() * totalDimension +				 
-				yb * totalDimension		 
-			;	
+			long long fileOffset =
+				descriptor.x * descriptor.matrix->dimension() +
+				descriptor.y * descriptor.matrix->dimension() * totalDimension +
+				yb * totalDimension
+			;
 
-			fileOffset *= sizeof(matrix_value_type);	
+			fileOffset *= sizeof(matrix_value_type);
 			return fileOffset;
 		}
 
 	private:
 		MPI_File handle_;
-	};	
+	};
 }

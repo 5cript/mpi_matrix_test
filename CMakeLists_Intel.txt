@@ -28,16 +28,10 @@ find_package(MPI REQUIRED)
 
 include_directories(${MPI_INCLUDE_PATH})
 
-# Boost
-set(BOOST_DIR, "$ENV{BOOST_ROOT}")
-find_package(Boost 1.61.0 COMPONENTS program_options)
-
 # Include Dirs
-include_directories(${Boost_INCLUDE_DIR})
 
 # Linking & Compile Options
-link_directories(${Boost_LIBRARY_DIRS})
-link_libraries(${MPI_LIBRARIES} ${Boost_LIBRARIES})
+link_libraries(${MPI_LIBRARIES})
 
 function(ALL_TARGET_PROPS target_name)
 	if(MPI_LINK_FLAGS)
@@ -48,7 +42,7 @@ function(ALL_TARGET_PROPS target_name)
 	  set_target_properties(${target_name} PROPERTIES COMPILE_FLAGS "${MPI_COMPILE_FLAGS}")
 	endif()	
 	
-	target_compile_options(${target_name} PUBLIC -fexceptions -std=c++14 -O3 -Wall -pedantic-errors -pedantic)
+	target_compile_options(${target_name} PUBLIC -fexceptions -std=c++14 -O3 -Wall)
 endfunction(ALL_TARGET_PROPS)
 
 if(TASK_3_4)

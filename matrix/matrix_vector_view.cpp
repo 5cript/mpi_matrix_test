@@ -7,30 +7,31 @@
 //####################################################################################################################
 MatrixVectorView::MatrixVectorView(MatrixVector *vector, int index)
 	: vector_{vector}
+	, blockDimension_{vector->get_block_dimension()}
 	, index_{index}
-    , offset_{index * vector->get_block_dimension() * vector->get_block_dimension()}
+    , offset_{index * blockDimension_ * blockDimension_}
 {
-	
+
 }
 //--------------------------------------------------------------------------------------------------------------------
 int MatrixVectorView::dimension() const
 {
-	return vector_->get_block_dimension();
+	return blockDimension_;
 }
 //--------------------------------------------------------------------------------------------------------------------
 Matrix::value_type* MatrixVectorView::get_line(int y) const
 {
-    return &vector_->data_[0] + offset_ + y * vector_->get_block_dimension();
+    return &vector_->data_[0] + offset_ + y * blockDimension_;
 }
 //--------------------------------------------------------------------------------------------------------------------
 int MatrixVectorView::data_size() const
 {
-    return vector_->get_block_dimension() * vector_->get_block_dimension();
+    return blockDimension_ * blockDimension_;
 }
 //--------------------------------------------------------------------------------------------------------------------
 void MatrixVectorView::accum_multiply(const MatrixVectorView &with, Matrix* target)
 {
-    int dimension = vector_->get_block_dimension();
+    int dimension = blockDimension_;
 
     for (int x = 0; x != dimension; ++x)
     {
@@ -52,12 +53,12 @@ void MatrixVectorView::print_matrix(int maxValues) const
 {
 	auto* data_ptr = get_line(0);
 
-	for (int y = 0; y != vector_->get_block_dimension(); ++y)
+	for (int y = 0; y != blockDimension_; ++y)
 	{
-		for (int x = 0; x != vector_->get_block_dimension(); ++x)
+		for (int x = 0; x != blockDimension_; ++x)
 		{
-			std::cout << data_ptr[y * vector_->get_block_dimension() + x] << ";";
-			if (y * vector_->get_block_dimension() + x > maxValues)
+			std::cout << data_ptr[y * blockDimension_ + x] << ";";
+			if (y * blockDimension_ + x > maxValues)
 			{
 				std::cout << "...\n";
 				return;

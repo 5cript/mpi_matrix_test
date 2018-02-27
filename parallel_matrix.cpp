@@ -19,17 +19,17 @@ ParallelContext::ParallelContext(Mpi::Context& ctx, ProgramOptions const& option
     , x{0}
     , y{0}
     , writeAtAll{false}
-	, leftSharedFile_{MPI_COMM_WORLD, options.leftMatrix, Mpi::FileStreamDirection::Read}
-	, rightSharedFile_{MPI_COMM_WORLD, options.rightMatrix, Mpi::FileStreamDirection::Read}
-	, resultSharedFile_{MPI_COMM_WORLD, options.resultMatrix, Mpi::FileStreamDirection::Write}
+	, leftSharedFile_{MPI_COMM_WORLD, options.leftMatrix, Mpi::FileStreamDirection::Read, 1, 1 * 1024u * 1024u, ctx.size()}
+	, rightSharedFile_{MPI_COMM_WORLD, options.rightMatrix, Mpi::FileStreamDirection::Read, 1, 1 * 1024u * 1024u, ctx.size()}
+	, resultSharedFile_{MPI_COMM_WORLD, options.resultMatrix, Mpi::FileStreamDirection::Write, 1, 1 * 1024u * 1024u, ctx.size()}
     , storage_{}
 {
     stamps.add("Stamp Maker Constructed");
 }
 //--------------------------------------------------------------------------------------------------------------------
 void ParallelContext::legacy_broadcast()
-{		
-	/*	
+{
+	/*
 	stamps.add("broadcast_whole");
 	communicator.broadcast <Matrix::value_type> (lhs.data(), lhs.data_size());
 	communicator.broadcast <Matrix::value_type> (rhs.data(), rhs.data_size());
@@ -52,6 +52,7 @@ void ParallelContext::use_write_at_all(bool waa)
 //--------------------------------------------------------------------------------------------------------------------
 void ParallelContext::dump_stamps_sync()
 {
+    MPI_Barrier(MPI_COMM_WORLD);
     if (ctx.is_root())
         stamps.dump();
 }
@@ -130,7 +131,7 @@ void ParallelContext::load_blocks(int cycle)
     stamps.add("Load Local End");
     stamps.add("Share Blocks Start");
     storage_->share_blocks();
-    stamps.add("Share Blocks Local End");
+    stamps.add("Share Blocks End");
 }
 //####################################################################################################################
 int parallel_multiplication(Mpi::Context&, ProgramOptions const&)
@@ -138,7 +139,7 @@ int parallel_multiplication(Mpi::Context&, ProgramOptions const&)
 	return 255;
 	/*
 	// result can be just one block.
-	Matrix resultBlock{blockWidth};	
+	Matrix resultBlock{blockWidth};
 	auto resultBlockView = MatrixPartition{&resultBlock, 1, ctx.size()};
 
 	auto leftPartition = MatrixPartition{&lhs, div, ctx.size()};
@@ -188,10 +189,10 @@ int parallel_multiplication(Mpi::Context&, ProgramOptions const&)
 	if (options.writeStrategy == WriteStrategy::SharedFile)
 	{
 		sharedFile = std::make_unique <Mpi::SharedMatrixFile>(
-			MPI_COMM_WORLD, 
-			options.resultMatrix, 
+			MPI_COMM_WORLD,
+			options.resultMatrix,
 			Mpi::FileStreamDirection::Write
-		);	
+		);
 
 		stamps.add("write_1_start");
 		auto pos = getMyCoordinates(ctx, div, 0);
@@ -209,9 +210,9 @@ int parallel_multiplication(Mpi::Context&, ProgramOptions const&)
 		if (options.saveChunks)
 			save_intermediary(resultBlock, ctx, options, 2);
 
-		// 5 
+		// 5
 		if (options.writeStrategy == WriteStrategy::Gather)
-		{		
+		{
 			int incrementor = 0;
 			std::vector <int> subGroupIds(div*div - ctx.size());
 			std::generate (subGroupIds.begin(), subGroupIds.end(), [&incrementor](){return incrementor++;});
@@ -223,7 +224,7 @@ int parallel_multiplication(Mpi::Context&, ProgramOptions const&)
 
 			stamps.add("gather_2_start");
 			subCom.gather(
-				resultBlock.data(), 
+				resultBlock.data(),
 				ctx.is_root() ? (overallResult->data() + ctx.size() * (blockWidth * blockWidth)) : nullptr,
 				resultBlock.data_size()
 			);
@@ -240,7 +241,7 @@ int parallel_multiplication(Mpi::Context&, ProgramOptions const&)
 	}
 
 	MPI_Barrier(MPI_COMM_WORLD);
-		
+
 	// 5
 	if (options.writeStrategy == WriteStrategy::Gather)
 	{
@@ -274,7 +275,7 @@ int load_matrices(Mpi::Context& ctx, ProgramOptions const& options, Matrix& lhs,
 	{
 	    //bool(Matrix::*reader)(std::string const&, int) = &Matrix::read_binary;
         auto reader = &Matrix::read_binary;
-		
+
 		if (options.humanReadableInput)
 		    reader = &Matrix::read_data;
 

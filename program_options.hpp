@@ -1,6 +1,11 @@
 #pragma once
 
-#include <boost/optional.hpp>
+#include <string>
+
+#ifdef __INTEL_COMPILER
+#else
+#   include <boost/optional.hpp>
+#endif
 
 enum class IdlePolicy
 {
@@ -34,7 +39,7 @@ struct ProgramOptions
 
 	/// Right matrix of the multiplication.
 	std::string rightMatrix;
-	
+
 	/// The matrix to write the result to.
 	std::string resultMatrix;
 
@@ -42,7 +47,7 @@ struct ProgramOptions
 	bool humanReadableInput;
 
 	/// Shall the output matrix be in human readable form or binary?
-	bool humanReadableOutput; 
+	bool humanReadableOutput;
 
 	/// UNUSED
 	int idlePolicy;
@@ -54,10 +59,20 @@ struct ProgramOptions
 	bool chunksAreHumanReadable;
 
 	/// The strategy to use for writing and gathering the result matrix.
+	/// UNUSED
 	WriteStrategy writeStrategy;
 
 	/// The directory where the chunks are stored, if enabled
 	std::string partResultDirectory;
 };
 
+
+
+/**
+ *  Does not work with intel compiler.
+ */
+#ifdef __INTEL_COMPILER
+ProgramOptions parse_arguments(int argc, char** argv);
+#else
 boost::optional <ProgramOptions> parse_arguments(int argc, char** argv);
+#endif // __INTEL_COMPILER

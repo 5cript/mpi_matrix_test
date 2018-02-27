@@ -2,6 +2,8 @@
 
 #include <mpi.h>
 
+#include "error.hpp"
+
 namespace Mpi
 {
 	class Context
@@ -24,12 +26,12 @@ namespace Mpi
 		 */
 		int size() const;
 
-		/** 
+		/**
 		 *	Who is root?
 		 */
 		int root() const;
-		
-		/** 
+
+		/**
 		 *	Is this instance root?
 		 */
 		bool is_root() const;

@@ -8,12 +8,21 @@ namespace Mpi
 	struct ConvertToMpiType {};
 }
 
+#ifndef __INTEL_COMPILER
 #define MPI_TEST_DECLARE_CONVERSION(CT, MT) \
 template <> \
 struct ConvertToMpiType <CT> \
 { \
-	static constexpr auto value = MT; \
+	static constexpr const MPI_Datatype value = MT; \
 }
+#else
+#define MPI_TEST_DECLARE_CONVERSION(CT, MT) \
+template <> \
+struct ConvertToMpiType <CT> \
+{ \
+	MPI_Datatype value = MT; \
+}
+#endif
 
 namespace Mpi
 {
@@ -31,3 +40,9 @@ namespace Mpi
 	MPI_TEST_DECLARE_CONVERSION(long double, MPI_LONG_DOUBLE);
 	MPI_TEST_DECLARE_CONVERSION(char, MPI_BYTE);
 }
+
+#ifndef __INTEL_COMPILER
+#   define TO_MPI_TYPE(X) Mpi::ConvertToMpiType <X>::value
+#else
+#   define TO_MPI_TYPE(X) Mpi::ConvertToMpiType <X>{}.value
+#endif

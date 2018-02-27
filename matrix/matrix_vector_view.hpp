@@ -17,7 +17,7 @@ public:
 	MatrixVectorView& operator=(MatrixVectorView&&) = default;
 
 	~MatrixVectorView() = default;
-	
+
 	/**
 	 *	Retrieve as line.
 	 */
@@ -49,6 +49,7 @@ public:
 
 private:
     MatrixVector* vector_;
+    int blockDimension_;
 	int index_;
 	int offset_;
 };

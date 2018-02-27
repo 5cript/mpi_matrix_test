@@ -1,4 +1,5 @@
 build/*
+build_intel/*
 *.cbp
 *.depend
 *_build_log.html
@@ -6,3 +7,4 @@ obj/*
 bin/*
 *.layout
 data/*
+/*.sh

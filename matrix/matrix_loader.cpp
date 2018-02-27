@@ -37,16 +37,16 @@ PullInstruction::PullInstruction(int instanceId, int instanceCount, int blocksPe
 	, loadResponsibility{}
 {
 	auto y = instanceId / blocksPerRC;
-	auto x = instanceId % blocksPerRC;	
+	auto x = instanceId % blocksPerRC;
 
 	std::generate_n(std::begin(left), blocksPerRC, StepGenerator{blocksPerRC * y, 1});
 	std::generate_n(std::begin(right), blocksPerRC, StepGenerator{x, blocksPerRC});
 
 	auto eraseSelf = [&](std::vector <int>& container) {
 		container.erase(std::remove_if(
-			std::begin(container), 
-			std::end(container), 
-			[&](auto elem){		
+			std::begin(container),
+			std::end(container),
+			[&](auto elem){
 				bool myResponsibility = (
 					elem % instanceCount == instanceId
 				);
@@ -65,9 +65,9 @@ PullInstruction::PullInstruction(int instanceId, int instanceCount, int blocksPe
 }
 //#####################################################################################################################
 MatrixStorage::MatrixStorage(
-	Mpi::Communicator* communicator, 
-	int instanceId, 
-	int instanceCount, 
+	Mpi::Communicator* communicator,
+	int instanceId,
+	int instanceCount,
 	int blocksPerRC,
 	int blockDimension
 )
@@ -83,14 +83,14 @@ MatrixStorage::MatrixStorage(
 }
 //---------------------------------------------------------------------------------------------------------------------
 void MatrixStorage::load_local(Mpi::SharedMatrixFile& left, Mpi::SharedMatrixFile& right)
-{	
+{
 	leftVector_ = std::make_unique <MatrixVector> (blockDimension_, blocksPerRC_);
 	rightVector_ = std::make_unique <MatrixVector> (blockDimension_, blocksPerRC_);
- 
+
 	for (auto const& load : instruction_.loadResponsibility)
 	{
 		auto y = load / blocksPerRC_;
-		auto x = load % blocksPerRC_;	
+		auto x = load % blocksPerRC_;
 
 		auto leftLoadedMatrix = leftVector_->get(x);
 		//leftLoadedMatrix->resize(blockDimension_);
@@ -139,10 +139,10 @@ void MatrixStorage::share_blocks()
             vector->get(respIndex).get_line(0),
             //vector->get(0).get_line(0),
             blockDimension_ * blockDimension_,
-            Mpi::ConvertToMpiType <matrix_value_type>::value,
+            TO_MPI_TYPE(matrix_value_type),
             vector->get(0).get_line(0),
             blockDimension_ * blockDimension_,
-            Mpi::ConvertToMpiType <matrix_value_type>::value,
+            TO_MPI_TYPE(matrix_value_type),
             subcom
         );
 

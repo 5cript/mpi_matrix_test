@@ -1,4 +1,5 @@
 #include "error.hpp"
+#include "mpi_core.hpp"
 
 #include <iostream>
 

@@ -1,10 +1,10 @@
 #include "3_4.hpp"
 
-#include "mpi/communicator.hpp"
-#include "matrix/matrix.hpp"
-#include "matrix/matrix_partition.hpp"
-#include "matrix/block_list.hpp"
-#include "bench/benchhelp.hpp"
+#include "../mpi/communicator.hpp"
+#include "../matrix/matrix.hpp"
+#include "../matrix/matrix_partition.hpp"
+#include "../matrix/block_list.hpp"
+#include "../bench/benchhelp.hpp"
 
 #include <stdexcept>
 

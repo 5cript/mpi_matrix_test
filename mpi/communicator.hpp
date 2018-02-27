@@ -13,7 +13,7 @@ namespace Mpi
 		~Communicator();
 
 		MPI_Comm get_handle() const;
-	
+
 		/**
 	 	 *	Broadcast data over to all instances.
 		 */
@@ -21,9 +21,9 @@ namespace Mpi
 		void broadcast(T* data, int bufferSize)
 		{
 			int res = MPI_Bcast(
-				reinterpret_cast <void*> (data), 
-				bufferSize, 
-				ConvertToMpiType <T>::value,
+				reinterpret_cast <void*> (data),
+				bufferSize,
+				TO_MPI_TYPE(T),
 				context_->root(),
 				com_
 			);
@@ -32,14 +32,14 @@ namespace Mpi
 
 		template <typename T>
 		void gather(T* sendData, T* recvBuffer, int sendBufferSize)
-		{		
+		{
 			int res = MPI_Gather(
 				sendData,
 				sendBufferSize,
-				ConvertToMpiType <T>::value,
+				TO_MPI_TYPE(T),
 				recvBuffer,
 				sendBufferSize,
-				ConvertToMpiType <T>::value,
+				TO_MPI_TYPE(T),
 				context_->root(),
 				com_
 			);
